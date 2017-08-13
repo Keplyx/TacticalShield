@@ -146,6 +146,11 @@ public Action DeployShield(int client_index, int args)
 		PrintHintText(client_index, "<font color='#ff0000' size='30'>You don't have a shield</font>");
 		return Plugin_Handled;
 	}
+	if (shields[client_index] > 0)
+	{
+		PrintHintText(client_index, "<font color='#ff0000' size='30'>Shield already deployed</font>");
+		return Plugin_Handled;
+	}
 	PrintHintText(client_index, "Use ts_remove command to remove your shield");
 	CreateShield(client_index);
 	return Plugin_Handled;
