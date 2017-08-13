@@ -40,9 +40,6 @@
 
 bool lateload;
 
-bool hasShield[MAXPLAYERS + 1];
-
-
 public Plugin myinfo =
 {
 	name = PLUGIN_NAME,
@@ -61,6 +58,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 public void OnPluginStart()
 {
 	HookEvent("round_start", Event_RoundStart);
+	HookEvent("player_death", Event_PlayerDeath);
 	
 	CreateConVars(VERSION);
 	RegisterCommands();
@@ -89,13 +87,12 @@ public void OnClientPostAdminCheck(int client_index)
 public void OnClientDisconnect(int client_index)
 {
 	DeleteShield(client_index);
-	ResetPlayer(client_index);
+	ResetPlayerVars(client_index);
 }
 
-public void ResetPlayer(int client_index)
+public void ResetPlayerVars(int client_index)
 {
 	hasShield[client_index] = false;
-	shields[client_index] = -1;
 }
 
 public void InitVars()
@@ -114,6 +111,13 @@ public void InitVars()
 public void Event_RoundStart(Handle event, const char[] name, bool dontBroadcast)
 {
 	InitVars();
+}
+
+public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
+{
+	int victim = GetClientOfUserId(GetEventInt(event, "userid"));
+	DeleteShield(victim);
+	ResetPlayerVars(victim);
 }
 
 /************************************************************************************************************
@@ -146,7 +150,7 @@ public Action DeployShield(int client_index, int args)
 		PrintHintText(client_index, "<font color='#ff0000' size='30'>You don't have a shield</font>");
 		return Plugin_Handled;
 	}
-	if (shields[client_index] > 0)
+	if (IsHoldingShield(client_index))
 	{
 		PrintHintText(client_index, "<font color='#ff0000' size='30'>Shield already deployed</font>");
 		return Plugin_Handled;
@@ -161,13 +165,6 @@ public Action RemoveShield(int client_index, int args)
 	DeleteShield(client_index);
 	return Plugin_Handled;
 }
-
-/************************************************************************************************************
- *											SHIELD METHODS
- ************************************************************************************************************/
-
-
-
 
 /************************************************************************************************************
  *											TIMERS
@@ -189,8 +186,35 @@ public Action Timer_WelcomeMessage(Handle timer, any ref)
 }
 
 /************************************************************************************************************
+ *											INPUT
+ ************************************************************************************************************/
+ 
+
+public Action OnPlayerRunCmd(int client_index, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
+{
+	if (!IsPlayerAlive(client_index))
+		return Plugin_Continue;
+	
+	
+	// Limit speed when using shield
+	if (IsHoldingShield(client_index))
+	{
+		if (vel[0] > cvar_speed.FloatValue)
+			vel[0] = cvar_speed.FloatValue;
+		if (vel[1] > cvar_speed.FloatValue)
+			vel[1] = cvar_speed.FloatValue;
+	}
+	return Plugin_Changed;
+}
+
+/************************************************************************************************************
  *											TESTS
  ************************************************************************************************************/
+
+public bool IsHoldingShield(int client_index)
+{
+	return shields[client_index] > 0;
+}
 
 stock bool IsValidClient(int client)
 {

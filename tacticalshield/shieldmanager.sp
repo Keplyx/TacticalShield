@@ -23,6 +23,8 @@
 char shieldModel[] = "models/props/de_inferno/hr_i/ground_stone/ground_stone.mdl";
 
 int shields[MAXPLAYERS + 1];
+bool hasShield[MAXPLAYERS + 1];
+
 
 public void CreateShield(int client_index)
 {
@@ -53,6 +55,7 @@ public void DeleteShield(int client_index)
 	{
 		RemoveEdict(shields[client_index]);
 	}
+	shields[client_index] = -1;
 }
 
 
@@ -60,10 +63,8 @@ public Action Hook_TakeDamageShield(int victim, int &attacker, int &inflictor, f
 {
 	PrintToChatAll("TOUCHED");
 	
-	float attackerPos[3], bulletDir[3], bulletRot[3];
+	float attackerPos[3];
 	GetClientEyePosition(attacker, attackerPos);
-//	MakeVectorFromPoints(attackerPos, damagePosition, bulletDir);
-//	GetVectorAngles(bulletDir, bulletRot);
 	
 	PrintToServer("---------------------------");
 	Handle trace = TR_TraceRayFilterEx(attackerPos, damagePosition, MASK_SHOT, RayType_EndPoint, TraceFilterShield, shields[victim]);

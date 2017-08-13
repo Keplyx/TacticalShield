@@ -19,12 +19,15 @@
 ConVar cvar_welcome_message = null;
 
 ConVar cvar_price = null;
+ConVar cvar_speed = null;
 
 public void CreateConVars(char[] version)
 {
 	CreateConVar("tacticalshield_version", version, "Tactical Shield", FCVAR_SPONLY | FCVAR_REPLICATED | FCVAR_NOTIFY | FCVAR_DONTRECORD);
 	cvar_welcome_message = CreateConVar("ts_welcomemessage", "1", "Displays a welcome message to new players. 0 = no message, 1 = display message", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	cvar_price = CreateConVar("ts_price", "100", "Shield price.", FCVAR_NOTIFY, true, 0.0, true, 50000.0);
+	cvar_speed = CreateConVar("ts_speed", "150", "Player speed when using shield. 130 = walk with knife, 250 = run with knife", FCVAR_NOTIFY, true, 0.0, true, 250.0);
+
 	AutoExecConfig(true, "tacticalshield");
 }
 
