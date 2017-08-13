@@ -26,6 +26,7 @@
 #pragma newdecls required;
 
 #include "tacticalshield/init.sp"
+#include "tacticalshield/shieldmanager.sp"
 
 /*  New in this version
 *
@@ -38,6 +39,9 @@
 #define AUTHOR "Keplyx"
 
 bool lateload;
+
+bool hasShield[MAXPLAYERS + 1];
+
 
 public Plugin myinfo =
 {
@@ -56,7 +60,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public void OnPluginStart()
 {
-
+	HookEvent("round_start", Event_RoundStart);
+	
 	CreateConVars(VERSION);
 	RegisterCommands();
 	
@@ -70,11 +75,94 @@ public void OnPluginStart()
 		ServerCommand("mp_restartgame 1");
 }
 
+public void OnMapStart()
+{
+	PrecacheModel(shieldModel, true);
+}
+
 public void OnClientPostAdminCheck(int client_index)
 {
 	int ref = EntIndexToEntRef(client_index);
 	CreateTimer(3.0, Timer_WelcomeMessage, ref);
 }
+
+public void OnClientDisconnect(int client_index)
+{
+	DeleteShield(client_index);
+	ResetPlayer(client_index);
+}
+
+public void ResetPlayer(int client_index)
+{
+	hasShield[client_index] = false;
+	shields[client_index] = -1;
+}
+
+public void InitVars()
+{
+	for (int i = 0; i < sizeof(hasShield); i++)
+	{
+		hasShield[i] = false;
+		shields[i] = -1;
+	}
+}
+
+/************************************************************************************************************
+ *											EVENTS
+ ************************************************************************************************************/
+
+public void Event_RoundStart(Handle event, const char[] name, bool dontBroadcast)
+{
+	InitVars();
+}
+
+/************************************************************************************************************
+ *											COMMANDS
+ ************************************************************************************************************/
+
+public Action BuyShield(int client_index, int args)
+{
+	if (hasShield[client_index])
+	{
+		PrintHintText(client_index, "<font color='#ff0000' size='30'>You already have a shield</font>");
+		return Plugin_Handled;
+	}
+	int money = GetEntProp(client_index, Prop_Send, "m_iAccount");
+	if (cvar_price.IntValue > money)
+	{
+		PrintHintText(client_index, "<font color='#ff0000' size='30'>Not enough money</font>");
+		return Plugin_Handled;
+	}
+	SetEntProp(client_index, Prop_Send, "m_iAccount", money - cvar_price.IntValue);
+	PrintHintText(client_index, "Use ts_deploy command to use your shield");
+	hasShield[client_index] = true;
+	return Plugin_Handled;
+}
+
+public Action DeployShield(int client_index, int args)
+{
+	if (!hasShield[client_index])
+	{
+		PrintHintText(client_index, "<font color='#ff0000' size='30'>You don't have a shield</font>");
+		return Plugin_Handled;
+	}
+	PrintHintText(client_index, "Use ts_remove command to remove your shield");
+	CreateShield(client_index);
+	return Plugin_Handled;
+}
+
+public Action RemoveShield(int client_index, int args)
+{
+	DeleteShield(client_index);
+	return Plugin_Handled;
+}
+
+/************************************************************************************************************
+ *											SHIELD METHODS
+ ************************************************************************************************************/
+
+
+
 
 /************************************************************************************************************
  *											TIMERS

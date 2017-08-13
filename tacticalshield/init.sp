@@ -18,12 +18,14 @@
 
 ConVar cvar_welcome_message = null;
 
+ConVar cvar_price = null;
+
 public void CreateConVars(char[] version)
 {
-	CreateConVar("chickenwars_version", version, "Chicken Strike", FCVAR_SPONLY | FCVAR_REPLICATED | FCVAR_NOTIFY | FCVAR_DONTRECORD);
-	cvar_welcome_message = CreateConVar("cw_welcomemessage", "1", "Displays a welcome message to new players. 0 = no message, 1 = display message", FCVAR_NOTIFY, true, 0.0, true, 1.0);
-	
-	AutoExecConfig(true, "chickenwars");
+	CreateConVar("tacticalshield_version", version, "Tactical Shield", FCVAR_SPONLY | FCVAR_REPLICATED | FCVAR_NOTIFY | FCVAR_DONTRECORD);
+	cvar_welcome_message = CreateConVar("ts_welcomemessage", "1", "Displays a welcome message to new players. 0 = no message, 1 = display message", FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	cvar_price = CreateConVar("ts_price", "100", "Shield price.", FCVAR_NOTIFY, true, 0.0, true, 50000.0);
+	AutoExecConfig(true, "tacticalshield");
 }
 
 public void IntiCvars()
@@ -35,5 +37,7 @@ public void IntiCvars()
 
 public void RegisterCommands()
 {
-	
+	RegConsoleCmd("ts_buy", BuyShield, "Buy the tactical shield");
+	RegConsoleCmd("ts_deploy", DeployShield, "Deploy the tactical shield");
+	RegConsoleCmd("ts_remove", RemoveShield, "Remove the tactical shield");
 }
