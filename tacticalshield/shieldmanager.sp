@@ -20,7 +20,7 @@
 #include <sdkhooks>
 
 
-char shieldModel[] = "models/props/de_inferno/hr_i/ground_stone/ground_stone.mdl";
+char shieldModel[] = "models/props/de_overpass/overpass_metal_door03.mdl";
 
 int shields[MAXPLAYERS + 1];
 bool hasShield[MAXPLAYERS + 1];
@@ -41,7 +41,7 @@ public void CreateShield(int client_index)
 		SetVariantString("!activator"); AcceptEntityInput(shield, "SetParent", client_index, shield, 0);
 		float pos[3], rot[3];
 		pos[0] += 20.0;
-		pos[2] += 50.0;
+		//pos[2] += 50.0;
 		TeleportEntity(shield, pos, rot, NULL_VECTOR);
 		
 		SDKHook(client_index, SDKHook_OnTakeDamage, Hook_TakeDamageShield);
