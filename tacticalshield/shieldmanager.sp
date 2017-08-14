@@ -41,16 +41,17 @@ public void CreateShield(int client_index)
 		SetVariantString("!activator"); AcceptEntityInput(shield, "SetParent", client_index, shield, 0);
 		float pos[3], rot[3];
 		pos[0] += 20.0;
-		//pos[2] += 50.0;
 		TeleportEntity(shield, pos, rot, NULL_VECTOR);
 		
 		SDKHook(client_index, SDKHook_OnTakeDamage, Hook_TakeDamageShield);
+		SDKHook(client_index, SDKHook_WeaponSwitch, Hook_WeaponSwitch);
 	}
 }
 
 public void DeleteShield(int client_index)
 {
 	SDKUnhook(client_index, SDKHook_OnTakeDamage, Hook_TakeDamageShield);
+	SDKUnhook(client_index, SDKHook_WeaponSwitch, Hook_WeaponSwitch);
 	if (IsValidEdict(shields[client_index]))
 	{
 		RemoveEdict(shields[client_index]);
@@ -58,20 +59,28 @@ public void DeleteShield(int client_index)
 	shields[client_index] = -1;
 }
 
+public void SetShieldPos(int client_index, bool isShooting)
+{
+	float rot[3];
+	if (isShooting)
+		rot[2] = 90.0;
+	TeleportEntity(shields[client_index], NULL_VECTOR, rot, NULL_VECTOR);
+}
+
+public void Hook_WeaponSwitch(int client_index, int weapon_index)
+{
+	DeleteShield(client_index);
+}
 
 public Action Hook_TakeDamageShield(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {
-	PrintToChatAll("TOUCHED");
-	
 	float attackerPos[3];
 	GetClientEyePosition(attacker, attackerPos);
 	
-	PrintToServer("---------------------------");
 	Handle trace = TR_TraceRayFilterEx(attackerPos, damagePosition, MASK_SHOT, RayType_EndPoint, TraceFilterShield, shields[victim]);
 	if(trace != INVALID_HANDLE && TR_DidHit(trace))
 	{
 		damage = 0.0;
-		PrintToServer("Hit shield");
 		return Plugin_Changed;
 	}
 	return Plugin_Continue;
@@ -79,7 +88,5 @@ public Action Hook_TakeDamageShield(int victim, int &attacker, int &inflictor, f
 
 public bool TraceFilterShield(int entity_index, int mask, any data)
 {
-	PrintToServer("entity: %i, shield: %i", entity_index, data);
-	PrintToServer("hit? %b", entity_index == data);
 	return entity_index == data;
 } 

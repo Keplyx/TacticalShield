@@ -155,6 +155,11 @@ public Action DeployShield(int client_index, int args)
 		PrintHintText(client_index, "<font color='#ff0000' size='30'>Shield already deployed</font>");
 		return Plugin_Handled;
 	}
+	if (!IsHoldingPistol(client_index))
+	{
+		PrintHintText(client_index, "<font color='#ff0000' size='30'>You must hold your pistol to use the shield</font>");
+		return Plugin_Handled;
+	}
 	PrintHintText(client_index, "Use ts_remove command to remove your shield");
 	CreateShield(client_index);
 	return Plugin_Handled;
@@ -203,6 +208,7 @@ public Action OnPlayerRunCmd(int client_index, int &buttons, int &impulse, float
 			vel[0] = cvar_speed.FloatValue;
 		if (vel[1] > cvar_speed.FloatValue)
 			vel[1] = cvar_speed.FloatValue;
+		SetShieldPos(client_index, buttons & IN_SPEED);
 	}
 	return Plugin_Changed;
 }
@@ -214,6 +220,15 @@ public Action OnPlayerRunCmd(int client_index, int &buttons, int &impulse, float
 public bool IsHoldingShield(int client_index)
 {
 	return shields[client_index] > 0;
+}
+
+public bool IsHoldingPistol(int client_index)
+{
+	char weaponName[64], pistolName[64];
+	int pistol = GetPlayerWeaponSlot(client_index, CS_SLOT_SECONDARY);
+	GetClientWeapon(client_index, weaponName, sizeof(weaponName));
+	GetEdictClassname(pistol, pistolName, sizeof(pistolName));
+	return StrEqual(pistolName, weaponName, false);
 }
 
 stock bool IsValidClient(int client)
