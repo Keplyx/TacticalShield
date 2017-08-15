@@ -221,7 +221,7 @@ public Action OnPlayerRunCmd(int client_index, int &buttons, int &impulse, float
 		
 		if (!(buttons & IN_SPEED))
 		{
-			float fUnlockTime = GetGameTime() + 0.2;
+			float fUnlockTime = GetGameTime() + 0.5;
 			SetEntPropFloat(client_index, Prop_Send, "m_flNextAttack", fUnlockTime);
 		}
 	}
