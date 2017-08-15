@@ -38,6 +38,8 @@
 #define PLUGIN_NAME "Tactical Shield"
 #define AUTHOR "Keplyx"
 
+#define customModelsPath "gamedata/tacticalshield/custom_models.txt"
+
 bool lateload;
 
 public Plugin myinfo =
@@ -62,6 +64,7 @@ public void OnPluginStart()
 	
 	CreateConVars(VERSION);
 	RegisterCommands();
+	ReadCustomModelsFile();
 	
 	for(int i = 1; i <= MaxClients; i++)
 	{
@@ -75,7 +78,7 @@ public void OnPluginStart()
 
 public void OnMapStart()
 {
-	PrecacheModel(shieldModel, true);
+	PrecacheModel(defaultShieldModel, true);
 }
 
 public void OnClientPostAdminCheck(int client_index)
@@ -123,6 +126,12 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 /************************************************************************************************************
  *											COMMANDS
  ************************************************************************************************************/
+
+public Action ReloadModelsList(int client_index, int args)
+{
+	ReadCustomModelsFile();
+	return Plugin_Handled;
+}
 
 public Action BuyShield(int client_index, int args)
 {
@@ -208,7 +217,13 @@ public Action OnPlayerRunCmd(int client_index, int &buttons, int &impulse, float
 			vel[0] = cvar_speed.FloatValue;
 		if (vel[1] > cvar_speed.FloatValue)
 			vel[1] = cvar_speed.FloatValue;
-		SetShieldPos(client_index, buttons & IN_SPEED);
+		SetShieldPos(client_index, !(buttons & IN_SPEED));
+		
+		if (!(buttons & IN_SPEED))
+		{
+			float fUnlockTime = GetGameTime() + 0.2;
+			SetEntPropFloat(client_index, Prop_Send, "m_flNextAttack", fUnlockTime);
+		}
 	}
 	return Plugin_Changed;
 }
@@ -238,4 +253,95 @@ stock bool IsValidClient(int client)
 		return false;
 	}
 	return IsClientInGame(client);
+}
+
+
+public void OnUseCustomModelChange(ConVar convar, char[] oldValue, char[] newValue)
+{
+	useCustomModel = convar.BoolValue;
+}
+
+
+/************************************************************************************************************
+ *											CUSTOM MODEL
+ ************************************************************************************************************/
+
+public void ReadCustomModelsFile()
+{
+	char path[PLATFORM_MAX_PATH], line[PLATFORM_MAX_PATH];
+	BuildPath(Path_SM, path, sizeof(path), "%s", customModelsPath);
+	File file = OpenFile(path, "r");
+	while (file.ReadLine(line, sizeof(line)))
+	{
+		if (StrContains(line, "//", false) == 0)
+			continue;
+		
+		if (StrContains(line, "model=", false) == 0)
+			ReadModel(line)
+		else if (StrContains(line, "pos{", false) == 0)
+			SetCustomTransform(file, true);
+		else if (StrContains(line, "rot{", false) == 0)
+			SetCustomTransform(file, false);
+		
+		if (file.EndOfFile())
+			break;
+	}
+	CloseHandle(file);
+}
+
+public void ReadModel(char line[PLATFORM_MAX_PATH])
+{
+	ReplaceString(line, sizeof(line), "model=", "", false);
+	ReplaceString(line, sizeof(line), "\n", "", false);
+	if (TryPrecacheCamModel(line))
+		Format(customShieldModel, sizeof(customShieldModel), "%s", line);
+	else
+		customShieldModel = "";
+}
+
+public void SetCustomTransform(File file, bool isPos)
+{
+	char line[512];
+	while (file.ReadLine(line, sizeof(line)))
+	{
+		int i = 0;
+		if (StrContains(line, "x=", false) == 0)
+			ReplaceString(line, sizeof(line), "x=", "", false);
+		else if (StrContains(line, "y=", false) == 0)
+		{
+			ReplaceString(line, sizeof(line), "y=", "", false);
+			i = 1;
+		}
+		else if (StrContains(line, "z=", false) == 0)
+		{
+			ReplaceString(line, sizeof(line), "z=", "", false);
+			i = 2;
+		}
+		else if (StrContains(line, "}", false) == 0)
+			return;
+		ReplaceString(line, sizeof(line), "\n", "", false);
+		if (isPos)
+		{
+			customPos[i] = StringToFloat(line);
+			PrintToServer("Pos: %i: %f", i, customPos[i]);
+		}
+		else
+		{
+			customRot[i] = StringToFloat(line);
+			PrintToServer("Rot: %i: %f", i, customRot[i]);
+		}
+	}
+}
+
+
+public bool TryPrecacheCamModel(char[] model)
+{
+	int result = PrecacheModel(model);
+	if (result < 1)
+	{
+		PrintToServer("Error precaching custom model '%s'. Falling back to default", model);
+		return false;
+	}
+	PrintToServer("Successfully precached custom model '%s'", model);
+	return true;
 }

@@ -20,18 +20,28 @@
 #include <sdkhooks>
 
 
-char shieldModel[] = "models/props/de_overpass/overpass_metal_door03.mdl";
+char defaultShieldModel[] = "models/props/de_overpass/overpass_metal_door03.mdl";
+char customShieldModel[PLATFORM_MAX_PATH];
+
 
 int shields[MAXPLAYERS + 1];
 bool hasShield[MAXPLAYERS + 1];
+bool useCustomModel = false;
 
+float shieldPos[3] = {20.0, 0.0, 0.0};
+
+float customPos[3];
+float customRot[3];
 
 public void CreateShield(int client_index)
 {
 	int shield = CreateEntityByName("prop_dynamic_override");
 	if (IsValidEntity(shield)) {
 		shields[client_index] = shield;
-		SetEntityModel(shield, shieldModel);
+		if (useCustomModel && !StrEqual(customShieldModel, "", false))
+			SetEntityModel(shield, customShieldModel);
+		else
+			SetEntityModel(shield, defaultShieldModel);
 		DispatchKeyValue(shield, "solid", "6");
 		SetEntProp(shield, Prop_Data, "m_CollisionGroup", 1); // Stop collisions with players / world
 		DispatchSpawn(shield);
@@ -40,7 +50,16 @@ public void CreateShield(int client_index)
 		SetEntityMoveType(shield, MOVETYPE_NONE)
 		SetVariantString("!activator"); AcceptEntityInput(shield, "SetParent", client_index, shield, 0);
 		float pos[3], rot[3];
-		pos[0] += 20.0;
+		for (int i = 0; i < 3; i++)
+		{
+			if (useCustomModel)
+			{
+				pos[i] = customPos[i];
+				rot[i] = customRot[i];
+			}
+			else
+				pos[i] = shieldPos[i];
+		}
 		TeleportEntity(shield, pos, rot, NULL_VECTOR);
 		
 		SDKHook(client_index, SDKHook_OnTakeDamage, Hook_TakeDamageShield);
@@ -59,12 +78,37 @@ public void DeleteShield(int client_index)
 	shields[client_index] = -1;
 }
 
-public void SetShieldPos(int client_index, bool isShooting)
+public void SetShieldPos(int client_index, bool isFull)
 {
-	float rot[3];
-	if (isShooting)
-		rot[2] = 90.0;
-	TeleportEntity(shields[client_index], NULL_VECTOR, rot, NULL_VECTOR);
+	float pos[3], rot[3];
+	if (!isFull)
+	{
+		if (useCustomModel)
+		{
+			//rot[1] += 60.0;
+			//pos[1] -= 20.0;
+		}
+		else
+		{
+			rot[1] = 45.0;
+			pos[0] = 0.0;
+			pos[1] = 30.0;
+		}
+	}
+	else
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			if (useCustomModel)
+			{
+				pos[i] = customPos[i];
+				rot[i] = customRot[i];
+			}
+			else
+				pos[i] = shieldPos[i];
+		}
+	}
+	TeleportEntity(shields[client_index], pos, rot, NULL_VECTOR);
 }
 
 public void Hook_WeaponSwitch(int client_index, int weapon_index)
