@@ -26,12 +26,16 @@ char customShieldModel[PLATFORM_MAX_PATH];
 
 int shields[MAXPLAYERS + 1];
 bool hasShield[MAXPLAYERS + 1];
+bool isShieldFull[MAXPLAYERS + 1];
+bool canChangeState[MAXPLAYERS + 1];
+
 bool useCustomModel = false;
 
 float shieldPos[3] = {20.0, 0.0, 0.0};
-
 float customPos[3];
 float customRot[3];
+float shieldCooldown = 1.0;
+
 
 public void CreateShield(int client_index)
 {
@@ -49,18 +53,9 @@ public void CreateShield(int client_index)
 		
 		SetEntityMoveType(shield, MOVETYPE_NONE)
 		SetVariantString("!activator"); AcceptEntityInput(shield, "SetParent", client_index, shield, 0);
-		float pos[3], rot[3];
-		for (int i = 0; i < 3; i++)
-		{
-			if (useCustomModel)
-			{
-				pos[i] = customPos[i];
-				rot[i] = customRot[i];
-			}
-			else
-				pos[i] = shieldPos[i];
-		}
-		TeleportEntity(shield, pos, rot, NULL_VECTOR);
+		SetShieldPos(client_index, true);
+		isShieldFull[client_index] = true;
+		canChangeState[client_index] = true;
 		
 		SDKHook(client_index, SDKHook_OnTakeDamage, Hook_TakeDamageShield);
 		SDKHook(client_index, SDKHook_WeaponSwitch, Hook_WeaponSwitch);
@@ -78,9 +73,22 @@ public void DeleteShield(int client_index)
 	shields[client_index] = -1;
 }
 
+public void ToggleShieldState(int client_index)
+{
+	if (canChangeState[client_index])
+	{
+		SetShieldPos(client_index, !isShieldFull[client_index]);
+		isShieldFull[client_index] = !isShieldFull[client_index];
+		canChangeState[client_index] = false;
+		int ref = EntIndexToEntRef(client_index);
+		CreateTimer(shieldCooldown, Timer_ShieldCooldown, ref);
+	}
+}
+
 public void SetShieldPos(int client_index, bool isFull)
 {
 	float pos[3], rot[3];
+	
 	if (!isFull)
 	{
 		if (useCustomModel)
@@ -114,6 +122,12 @@ public void SetShieldPos(int client_index, bool isFull)
 public void Hook_WeaponSwitch(int client_index, int weapon_index)
 {
 	DeleteShield(client_index);
+}
+
+public Action Timer_ShieldCooldown(Handle timer, any ref)
+{
+	int client_index = EntRefToEntIndex(ref);
+	canChangeState[client_index] = true;
 }
 
 public Action Hook_TakeDamageShield(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)

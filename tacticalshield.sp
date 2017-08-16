@@ -100,6 +100,8 @@ public void ResetPlayerVars(int client_index)
 
 public void InitVars()
 {
+	useCustomModel = cvar_usecustom_model.BoolValue;
+	shieldCooldown = cvar_cooldown.FloatValue;
 	for (int i = 0; i < sizeof(hasShield); i++)
 	{
 		hasShield[i] = false;
@@ -210,22 +212,50 @@ public Action OnPlayerRunCmd(int client_index, int &buttons, int &impulse, float
 		return Plugin_Continue;
 	
 	
-	// Limit speed when using shield
 	if (IsHoldingShield(client_index))
 	{
-		if (vel[0] > cvar_speed.FloatValue)
-			vel[0] = cvar_speed.FloatValue;
-		if (vel[1] > cvar_speed.FloatValue)
-			vel[1] = cvar_speed.FloatValue;
-		SetShieldPos(client_index, !(buttons & IN_SPEED));
+		if (buttons & IN_USE)
+			ToggleShieldState(client_index);
 		
-		if (!(buttons & IN_SPEED))
+		if (!isShieldFull[client_index])
 		{
+			// Limit speed when using shield (faster when not fully using it)
+			float runSpeed = cvar_speed.FloatValue + 100;
+			if (runSpeed > 250.0)
+				runSpeed = 250.0;
+			
+			LimitSpeed(client_index, runSpeed);
+			
 			float fUnlockTime = GetGameTime() + 0.5;
 			SetEntPropFloat(client_index, Prop_Send, "m_flNextAttack", fUnlockTime);
 		}
+		else
+		{
+			float walkSpeed = cvar_speed.FloatValue;
+			if (buttons & IN_SPEED)
+				walkSpeed /= 2.0;
+			if (buttons & IN_DUCK)
+				walkSpeed /= 4.0;
+			// Limit speed when using shield
+			LimitSpeed(client_index, walkSpeed);
+		}
 	}
 	return Plugin_Changed;
+}
+
+public void LimitSpeed(int client_index, float maxSpeed)
+{
+	float vel[3];
+	GetEntPropVector(client_index, Prop_Data, "m_vecVelocity", vel);
+	float velNorm = SquareRoot(vel[0]*vel[0] + vel[1]*vel[1]); // We do not limit falling speed
+	if (velNorm <= maxSpeed)
+		return;
+	
+	vel[0] /= velNorm;
+	vel[0] *= maxSpeed;
+	vel[1] /= velNorm;
+	vel[1] *= maxSpeed;
+	TeleportEntity(client_index, NULL_VECTOR, NULL_VECTOR, vel);
 }
 
 /************************************************************************************************************
@@ -256,9 +286,12 @@ stock bool IsValidClient(int client)
 }
 
 
-public void OnUseCustomModelChange(ConVar convar, char[] oldValue, char[] newValue)
+public void OnCvarChange(ConVar convar, char[] oldValue, char[] newValue)
 {
-	useCustomModel = convar.BoolValue;
+	if (convar == cvar_usecustom_model)
+		useCustomModel = convar.BoolValue;
+	else if (convar == cvar_cooldown)
+		shieldCooldown = convar.FloatValue;
 }
 
 
