@@ -225,12 +225,12 @@ public Action OnPlayerRunCmd(int client_index, int &buttons, int &impulse, float
 				runSpeed = 250.0;
 			
 			LimitSpeed(client_index, runSpeed);
-			
-			float fUnlockTime = GetGameTime() + 0.5;
-			SetEntPropFloat(client_index, Prop_Send, "m_flNextAttack", fUnlockTime);
 		}
 		else
 		{
+			float fUnlockTime = GetGameTime() + 0.5;
+			SetEntPropFloat(client_index, Prop_Send, "m_flNextAttack", fUnlockTime);
+			
 			float walkSpeed = cvar_speed.FloatValue;
 			if (buttons & IN_SPEED)
 				walkSpeed /= 2.0;
