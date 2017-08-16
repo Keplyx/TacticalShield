@@ -20,7 +20,7 @@
 #include <sdkhooks>
 
 
-char defaultShieldModel[] = "models/props/de_overpass/overpass_metal_door03.mdl";
+char defaultShieldModel[] = "models/props_unique/subwaycar_all_onetexture_sidedoor.mdl";
 char customShieldModel[PLATFORM_MAX_PATH];
 
 
@@ -31,9 +31,14 @@ bool canChangeState[MAXPLAYERS + 1];
 
 bool useCustomModel = false;
 
-float shieldPos[3] = {20.0, 0.0, 0.0};
+float defaultPos[3] = {20.0, 0.0, 50.0};
+float defaultRot[3] = {0.0, 90.0, 0.0};
+float defaultMovedPos[3] = {0.0, 30.0, 50.0};
+float defaultMovedRot[3] = {0.0, 135.0, 0.0};
 float customPos[3];
 float customRot[3];
+float customMovedPos[3];
+float customMovedRot[3];
 float shieldCooldown = 1.0;
 
 
@@ -88,24 +93,22 @@ public void ToggleShieldState(int client_index)
 public void SetShieldPos(int client_index, bool isFull)
 {
 	float pos[3], rot[3];
-	
-	if (!isFull)
+	for (int i = 0; i < 3; i++)
 	{
-		if (useCustomModel)
+		if (!isFull)
 		{
-			//rot[1] += 60.0;
-			//pos[1] -= 20.0;
+			if (useCustomModel)
+			{
+				pos[i] = customMovedPos[i];
+				rot[i] = customMovedRot[i];
+			}
+			else
+			{
+				pos[i] = defaultMovedPos[i];
+				rot[i] = defaultMovedRot[i];
+			}
 		}
 		else
-		{
-			rot[1] = 45.0;
-			pos[0] = 0.0;
-			pos[1] = 30.0;
-		}
-	}
-	else
-	{
-		for (int i = 0; i < 3; i++)
 		{
 			if (useCustomModel)
 			{
@@ -113,7 +116,10 @@ public void SetShieldPos(int client_index, bool isFull)
 				rot[i] = customRot[i];
 			}
 			else
-				pos[i] = shieldPos[i];
+			{
+				pos[i] = defaultPos[i];
+				rot[i] = defaultRot[i];
+			}
 		}
 	}
 	TeleportEntity(shields[client_index], pos, rot, NULL_VECTOR);
