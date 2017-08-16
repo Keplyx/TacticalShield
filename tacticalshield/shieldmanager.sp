@@ -20,7 +20,7 @@
 #include <sdkhooks>
 
 
-char defaultShieldModel[] = "models/props_unique/subwaycar_all_onetexture_sidedoor.mdl";
+char defaultShieldModel[] = "models/props/de_overpass/overpass_metal_door02.mdl";
 char customShieldModel[PLATFORM_MAX_PATH];
 
 
@@ -31,10 +31,10 @@ bool canChangeState[MAXPLAYERS + 1];
 
 bool useCustomModel = false;
 
-float defaultPos[3] = {20.0, 0.0, 50.0};
-float defaultRot[3] = {0.0, 90.0, 0.0};
-float defaultMovedPos[3] = {0.0, 30.0, 50.0};
-float defaultMovedRot[3] = {0.0, 135.0, 0.0};
+float defaultPos[3] = {20.0, 0.0, 0.0};
+float defaultRot[3] = {0.0, 0.0, 0.0};
+float defaultMovedPos[3] = {0.0, 30.0, 0.0};
+float defaultMovedRot[3] = {0.0, 45.0, 0.0};
 float customPos[3];
 float customRot[3];
 float customMovedPos[3];
