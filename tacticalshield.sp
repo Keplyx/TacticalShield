@@ -312,10 +312,13 @@ public void ReadCustomModelsFile()
 		if (StrContains(line, "model=", false) == 0)
 			ReadModel(line)
 		else if (StrContains(line, "pos{", false) == 0)
-			SetCustomTransform(file, true);
+			SetCustomTransform(file, true, true);
 		else if (StrContains(line, "rot{", false) == 0)
-			SetCustomTransform(file, false);
-		
+			SetCustomTransform(file, false, true);
+		else if (StrContains(line, "movedpos{", false) == 0)
+			SetCustomTransform(file, true, false);
+		else if (StrContains(line, "movedrot{", false) == 0)
+			SetCustomTransform(file, false, false);
 		if (file.EndOfFile())
 			break;
 	}
@@ -332,7 +335,7 @@ public void ReadModel(char line[PLATFORM_MAX_PATH])
 		customShieldModel = "";
 }
 
-public void SetCustomTransform(File file, bool isPos)
+public void SetCustomTransform(File file, bool isPos, bool isFull)
 {
 	char line[512];
 	while (file.ReadLine(line, sizeof(line)))
@@ -353,15 +356,20 @@ public void SetCustomTransform(File file, bool isPos)
 		else if (StrContains(line, "}", false) == 0)
 			return;
 		ReplaceString(line, sizeof(line), "\n", "", false);
-		if (isPos)
+		
+		if (isFull)
 		{
-			customPos[i] = StringToFloat(line);
-			PrintToServer("Pos: %i: %f", i, customPos[i]);
+			if (isPos)
+				customPos[i] = StringToFloat(line);
+			else
+				customRot[i] = StringToFloat(line);
 		}
 		else
 		{
-			customRot[i] = StringToFloat(line);
-			PrintToServer("Rot: %i: %f", i, customRot[i]);
+			if (isPos)
+				customMovedPos[i] = StringToFloat(line);
+			else
+				customMovedRot[i] = StringToFloat(line);
 		}
 	}
 }
