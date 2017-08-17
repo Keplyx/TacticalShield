@@ -2,12 +2,15 @@
 
 This plugin adds a tactical shield to the game. It is designed to improve the tactical side of the game.
 
-You can use this plugin along with my plugin [Cameras and Drones](https://github.com/Keplyx/TacticalShield).
+You can use this plugin along with my plugin [Cameras and Drones](https://github.com/Keplyx/cameras-and-drones).
 
 
 ## Installation
 
 Simply download **[tacticalshield.smx](https://github.com/Keplyx/TacticalShield/raw/master/plugins/TacticalShield.smx)** and place it in your server inside "csgo/addons/sourcemod/plugins/".
+
+You can choose your own models to use for shields. To do so, install it in your csgo, then enter the needed informations in [custom_models.txt](https://github.com/Keplyx/TacticalShield/blob/master/gamedata/tacticalshield/custom_models.txt).
+
 A map is currently being made to work along with this plugin. [Get it here!](http://steamcommunity.com/sharedfiles/filedetails/?id=1102250426)
 
 ## Features
