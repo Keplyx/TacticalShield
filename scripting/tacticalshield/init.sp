@@ -53,4 +53,6 @@ public void RegisterCommands()
 	RegConsoleCmd("ts_buy", BuyShield, "Buy the tactical shield");
 	RegConsoleCmd("ts_deploy", DeployShield, "Deploy the tactical shield");
 	RegConsoleCmd("ts_remove", RemoveShield, "Remove the tactical shield");
+	RegConsoleCmd("ts_help", ShowHelp, "Show plugin help");
+	RegConsoleCmd("say !ts_help", ShowHelp, "Show plugin help");
 }

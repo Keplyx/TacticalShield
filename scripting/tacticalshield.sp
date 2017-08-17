@@ -135,6 +135,45 @@ public Action ReloadModelsList(int client_index, int args)
 	return Plugin_Handled;
 }
 
+public Action ShowHelp(int client_index, int args)
+{
+	PrintToConsole(client_index, "|-------------------------------------------------------|");
+	PrintToConsole(client_index, "|------------- TACTICAL SHIELD HELP --------------------|");
+	PrintToConsole(client_index, "|---- CONSOLE ----|-- IN CHAT --|-- DESCRIPTION --------|");
+	PrintToConsole(client_index, "|ts_buy           |             |Buy shield             |");
+	PrintToConsole(client_index, "|-----------------|-------------|-----------------------|");
+	PrintToConsole(client_index, "|ts_deploy        |             |Deploy the shield      |");
+	PrintToConsole(client_index, "|-----------------|-------------|-----------------------|");
+	PrintToConsole(client_index, "|ts_remove        |             |Remove the shield      |");
+	PrintToConsole(client_index, "|-----------------|-------------|-----------------------|");
+	PrintToConsole(client_index, "|ts_help          |!ts_help     |Display this help      |");
+	PrintToConsole(client_index, "|-----------------|-------------|-----------------------|");
+	PrintToConsole(client_index, "|-----------        ADMIN ONLY       -------------------|");
+	PrintToConsole(client_index, "|-----------------|-------------|-----------------------|");
+	PrintToConsole(client_index, "|cd_reloadmodels  |             |Reload custom models   |");
+	PrintToConsole(client_index, "|-------------------------------------------------------|");
+	PrintToConsole(client_index, "");
+	PrintToConsole(client_index, "Press +use when holding the shield to switch between 'full' mode and 'half' mode");
+	PrintToConsole(client_index, "Shield is automatically removed when switching weapons");
+	PrintToConsole(client_index, "");
+	PrintToConsole(client_index, "For a better experience, you should bind ts_buy and ts_deploy to a key:");
+	PrintToConsole(client_index, "bind 'KEY' 'COMMAND' | This will bind 'COMMAND to 'KEY'");
+	PrintToConsole(client_index, "EXAMPLE:");
+	PrintToConsole(client_index, "bind \"z\" \"ts_buy\" | This will bind the buy command to the <Z> key");
+	PrintToConsole(client_index, "bind \"x\" \"ts_deploy\" | This will bind the deploy command to the <X> key");
+	
+	CPrintToChat(client_index, "{green}----- TACTICAL SHIELD HELP -----");
+	CPrintToChat(client_index, "{lime}>>> START");
+	CPrintToChat(client_index, "This plugin is used with the console:");
+	CPrintToChat(client_index, "To enable the console, do the following:");
+	CPrintToChat(client_index, "{yellow}Options -> Game Option -> Enable Developper Console");
+	CPrintToChat(client_index, "To set the toggle key, do the following:");
+	CPrintToChat(client_index, "{yellow}Options -> Keyboard/Mouse -> Toggle Console");
+	CPrintToChat(client_index, "{lime}Open the console for more information");
+	CPrintToChat(client_index, "{green}----- ---------- ---------- -----");
+	return Plugin_Handled;
+}
+
 public Action BuyShield(int client_index, int args)
 {
 	if (hasShield[client_index])
