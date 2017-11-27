@@ -42,6 +42,14 @@ float customMovedRot[3];
 float shieldCooldown = 1.0;
 
 
+/**
+* Creates a shield for the given player.
+* This shield is a prop prop_dynamic_override with the custom shield model
+* (default if none was specified in the custom models file)
+* It does not collide with players and world.
+*
+* @param client_index        Index of the client.
+*/
 public void CreateShield(int client_index)
 {
 	int shield = CreateEntityByName("prop_dynamic_override");
@@ -55,18 +63,23 @@ public void CreateShield(int client_index)
 		SetEntProp(shield, Prop_Data, "m_CollisionGroup", 1); // Stop collisions with players / world
 		DispatchSpawn(shield);
 		ActivateEntity(shield);
-		
+
 		SetEntityMoveType(shield, MOVETYPE_NONE)
 		SetVariantString("!activator"); AcceptEntityInput(shield, "SetParent", client_index, shield, 0);
 		SetShieldPos(client_index, true);
 		isShieldFull[client_index] = true;
 		canChangeState[client_index] = true;
-		
+
 		SDKHook(client_index, SDKHook_OnTakeDamage, Hook_TakeDamageShield);
 		SDKHook(client_index, SDKHook_WeaponSwitch, Hook_WeaponSwitch);
 	}
 }
 
+/**
+* Deletes the shield for the given player.
+*
+* @param client_index        Index of the client.
+*/
 public void DeleteShield(int client_index)
 {
 	SDKUnhook(client_index, SDKHook_OnTakeDamage, Hook_TakeDamageShield);
@@ -78,6 +91,11 @@ public void DeleteShield(int client_index)
 	shields[client_index] = -1;
 }
 
+/**
+* Toggles the shield between full and half position for the given player.
+*
+* @param client_index        Index of the client.
+*/
 public void ToggleShieldState(int client_index)
 {
 	if (canChangeState[client_index])
@@ -90,6 +108,13 @@ public void ToggleShieldState(int client_index)
 	}
 }
 
+/**
+* Sets the shield position for the given player.
+* Uses the custom rotation if specified in the custom models file, default otherwise.
+*
+* @param client_index        Index of the client.
+* @param isFull              Shield position.
+*/
 public void SetShieldPos(int client_index, bool isFull)
 {
 	float pos[3], rot[3];
@@ -125,24 +150,37 @@ public void SetShieldPos(int client_index, bool isFull)
 	TeleportEntity(shields[client_index], pos, rot, NULL_VECTOR);
 }
 
+/**
+* Deletes the shield if the player switches to an other weapon.
+*
+* @param client_index        Index of the client.
+* @param weapon_index        Index of the weapon.
+*/
 public void Hook_WeaponSwitch(int client_index, int weapon_index)
 {
 	DeleteShield(client_index);
 }
 
+/**
+* Timer to prevent players from changing shield state too quickly.
+*/
 public Action Timer_ShieldCooldown(Handle timer, any ref)
 {
 	int client_index = EntRefToEntIndex(ref);
 	canChangeState[client_index] = true;
 }
 
+/**
+* When the shield holder is taking damage, trace a ray between the damage position and the damage origin.
+* If the ray hits the shield, negate the damage.
+*/
 public Action Hook_TakeDamageShield(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {
 	if (attacker < 1 || attacker > MAXPLAYERS)
 		return Plugin_Continue;
 	float attackerPos[3];
 	GetClientEyePosition(attacker, attackerPos);
-	
+
 	Handle trace = TR_TraceRayFilterEx(attackerPos, damagePosition, MASK_SHOT, RayType_EndPoint, TraceFilterShield, shields[victim]);
 	if(trace != INVALID_HANDLE && TR_DidHit(trace))
 	{
@@ -152,7 +190,10 @@ public Action Hook_TakeDamageShield(int victim, int &attacker, int &inflictor, f
 	return Plugin_Continue;
 }
 
+/**
+* Filter for trace rays returning true only if the entity is the one specified in the data parameter.
+*/
 public bool TraceFilterShield(int entity_index, int mask, any data)
 {
 	return entity_index == data;
-} 
+}

@@ -61,43 +61,60 @@ public void OnPluginStart()
 {
 	HookEvent("round_start", Event_RoundStart);
 	HookEvent("player_death", Event_PlayerDeath);
-	
+
 	CreateConVars(VERSION);
 	RegisterCommands();
 	ReadCustomModelsFile();
-	
+
 	for(int i = 1; i <= MaxClients; i++)
 	{
 		if (IsValidClient(i) && !IsFakeClient(i))
 			OnClientPostAdminCheck(i);
 	}
-	
+
 	if (lateload)
 		ServerCommand("mp_restartgame 1");
 }
 
+/**
+* Precache models when the map starts to prevent crashes.
+*/
 public void OnMapStart()
 {
 	PrecacheModel(defaultShieldModel, true);
 }
 
+/**
+* Display a welcome message when the user gets in the server.
+*/
 public void OnClientPostAdminCheck(int client_index)
 {
 	int ref = EntIndexToEntRef(client_index);
 	CreateTimer(3.0, Timer_WelcomeMessage, ref);
 }
 
+/**
+* Reset everything related to the disconnected player.
+*/
 public void OnClientDisconnect(int client_index)
 {
 	DeleteShield(client_index);
 	ResetPlayerVars(client_index);
 }
 
+/**
+* Reset variables related to the given player player.
+*
+* @param client_index        Index of the client.
+*/
 public void ResetPlayerVars(int client_index)
 {
 	hasShield[client_index] = false;
 }
 
+/**
+* Initialize variables to default values.
+*/
 public void InitVars()
 {
 	useCustomModel = cvar_usecustom_model.BoolValue;
@@ -113,11 +130,17 @@ public void InitVars()
  *											EVENTS
  ************************************************************************************************************/
 
+ /**
+ * Initialize variables when round starts.
+ */
 public void Event_RoundStart(Handle event, const char[] name, bool dontBroadcast)
 {
 	InitVars();
 }
 
+/**
+* Reset everything related to the dying player.
+*/
 public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
 {
 	int victim = GetClientOfUserId(GetEventInt(event, "userid"));
@@ -129,12 +152,18 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
  *											COMMANDS
  ************************************************************************************************************/
 
+ /**
+ * Reload custom models file.
+ */
 public Action ReloadModelsList(int client_index, int args)
 {
 	ReadCustomModelsFile();
 	return Plugin_Handled;
 }
 
+/**
+* Show plugin help in the console and in chat.
+*/
 public Action ShowHelp(int client_index, int args)
 {
 	PrintToConsole(client_index, "|-------------------------------------------------------|");
@@ -161,7 +190,7 @@ public Action ShowHelp(int client_index, int args)
 	PrintToConsole(client_index, "EXAMPLE:");
 	PrintToConsole(client_index, "bind \"z\" \"ts_buy\" | This will bind the buy command to the <Z> key");
 	PrintToConsole(client_index, "bind \"x\" \"ts_deploy\" | This will bind the deploy command to the <X> key");
-	
+
 	CPrintToChat(client_index, "{green}----- TACTICAL SHIELD HELP -----");
 	CPrintToChat(client_index, "{lime}>>> START");
 	CPrintToChat(client_index, "This plugin is used with the console:");
@@ -174,6 +203,10 @@ public Action ShowHelp(int client_index, int args)
 	return Plugin_Handled;
 }
 
+/**
+* Buy a new shield for the player using this command.
+* A player can buy a shield if he has enough money and does not already have one.
+*/
 public Action BuyShield(int client_index, int args)
 {
 	if (hasShield[client_index])
@@ -193,6 +226,9 @@ public Action BuyShield(int client_index, int args)
 	return Plugin_Handled;
 }
 
+/**
+* Deploy the shield for the player using te command if he is holding a pistol.
+*/
 public Action DeployShield(int client_index, int args)
 {
 	if (!hasShield[client_index])
@@ -215,6 +251,9 @@ public Action DeployShield(int client_index, int args)
 	return Plugin_Handled;
 }
 
+/**
+* Delete the shield for the player using the command.
+*/
 public Action RemoveShield(int client_index, int args)
 {
 	DeleteShield(client_index);
@@ -224,7 +263,11 @@ public Action RemoveShield(int client_index, int args)
 /************************************************************************************************************
  *											TIMERS
  ************************************************************************************************************/
- 
+
+ /**
+ * Display a message to the player showing the plugin name and author.
+ * Can be disabled by cvar.
+ */
 public Action Timer_WelcomeMessage(Handle timer, any ref)
 {
 	int client_index = EntRefToEntIndex(ref);
@@ -243,33 +286,35 @@ public Action Timer_WelcomeMessage(Handle timer, any ref)
 /************************************************************************************************************
  *											INPUT
  ************************************************************************************************************/
- 
 
+ /**
+ * Manage player input.
+ */
 public Action OnPlayerRunCmd(int client_index, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
 {
 	if (!IsPlayerAlive(client_index))
 		return Plugin_Continue;
-	
-	
+
+
 	if (IsHoldingShield(client_index))
 	{
 		if (buttons & IN_USE)
 			ToggleShieldState(client_index);
-		
+
 		if (!isShieldFull[client_index])
 		{
 			// Limit speed when using shield (faster when not fully using it)
 			float runSpeed = cvar_speed.FloatValue + 100;
 			if (runSpeed > 250.0)
 				runSpeed = 250.0;
-			
+
 			LimitSpeed(client_index, runSpeed);
 		}
 		else
 		{
 			float fUnlockTime = GetGameTime() + 0.5;
 			SetEntPropFloat(client_index, Prop_Send, "m_flNextAttack", fUnlockTime);
-			
+
 			float walkSpeed = cvar_speed.FloatValue;
 			if (buttons & IN_SPEED)
 				walkSpeed /= 2.0;
@@ -282,14 +327,21 @@ public Action OnPlayerRunCmd(int client_index, int &buttons, int &impulse, float
 	return Plugin_Changed;
 }
 
+/**
+* Limit the player speed to the ine specified.
+* It does not limit falling or jumping speed
+*
+* @param client_index           Index of the client.
+* @param maxSpeed               Speed limit.
+*/
 public void LimitSpeed(int client_index, float maxSpeed)
 {
 	float vel[3];
 	GetEntPropVector(client_index, Prop_Data, "m_vecVelocity", vel);
-	float velNorm = SquareRoot(vel[0]*vel[0] + vel[1]*vel[1]); // We do not limit falling speed
+	float velNorm = SquareRoot(vel[0]*vel[0] + vel[1]*vel[1]);
 	if (velNorm <= maxSpeed)
 		return;
-	
+
 	vel[0] /= velNorm;
 	vel[0] *= maxSpeed;
 	vel[1] /= velNorm;
@@ -301,11 +353,23 @@ public void LimitSpeed(int client_index, float maxSpeed)
  *											TESTS
  ************************************************************************************************************/
 
+ /**
+ * Test if the given player is holding a shield.
+ *
+ * @param client_index           Index of the client.
+ * @return  true if the player is holding a shield, false otherwise.
+ */
 public bool IsHoldingShield(int client_index)
 {
 	return shields[client_index] > 0;
 }
 
+/**
+* Test if the given player is holding a pistol.
+*
+* @param client_index           Index of the client.
+* @return   true if the player is holding a pistol, false otherwise.
+*/
 public bool IsHoldingPistol(int client_index)
 {
 	char weaponName[64], pistolName[64];
@@ -315,6 +379,13 @@ public bool IsHoldingPistol(int client_index)
 	return StrEqual(pistolName, weaponName, false);
 }
 
+/**
+* Test if the given player is valid.
+* The player must be connected and in game to be valid.
+*
+* @param client_index           Index of the client.
+* @return true if the player is valid, false otherwise.
+*/
 stock bool IsValidClient(int client)
 {
 	if (client <= 0 || client > MaxClients || !IsClientConnected(client))
@@ -324,7 +395,9 @@ stock bool IsValidClient(int client)
 	return IsClientInGame(client);
 }
 
-
+/**
+* Changes the variables associated to the cvars when changed.
+*/
 public void OnCvarChange(ConVar convar, char[] oldValue, char[] newValue)
 {
 	if (convar == cvar_usecustom_model)
@@ -338,6 +411,10 @@ public void OnCvarChange(ConVar convar, char[] oldValue, char[] newValue)
  *											CUSTOM MODEL
  ************************************************************************************************************/
 
+ /**
+ * Read the custom models file to extract model names and custom rotations.
+ * Those models and rotations are used if the corresponding cvar is set.
+ */
 public void ReadCustomModelsFile()
 {
 	char path[PLATFORM_MAX_PATH], line[PLATFORM_MAX_PATH];
@@ -347,7 +424,7 @@ public void ReadCustomModelsFile()
 	{
 		if (StrContains(line, "//", false) == 0)
 			continue;
-		
+
 		if (StrContains(line, "model=", false) == 0)
 			ReadModel(line)
 		else if (StrContains(line, "pos{", false) == 0)
@@ -364,6 +441,9 @@ public void ReadCustomModelsFile()
 	CloseHandle(file);
 }
 
+/**
+* Read the model on the given line and extracts the value to the associated variable.
+*/
 public void ReadModel(char line[PLATFORM_MAX_PATH])
 {
 	ReplaceString(line, sizeof(line), "model=", "", false);
@@ -374,6 +454,9 @@ public void ReadModel(char line[PLATFORM_MAX_PATH])
 		customShieldModel = "";
 }
 
+/**
+* Read the custom rotations and extracts their values to the corresponding variables.
+*/
 public void SetCustomTransform(File file, bool isPos, bool isFull)
 {
 	char line[512];
@@ -395,7 +478,7 @@ public void SetCustomTransform(File file, bool isPos, bool isFull)
 		else if (StrContains(line, "}", false) == 0)
 			return;
 		ReplaceString(line, sizeof(line), "\n", "", false);
-		
+
 		if (isFull)
 		{
 			if (isPos)
@@ -413,7 +496,10 @@ public void SetCustomTransform(File file, bool isPos, bool isFull)
 	}
 }
 
-
+/**
+* Try to precache the given model.
+* If a model cannot be precached, it means it is not valid.
+*/
 public bool TryPrecacheCamModel(char[] model)
 {
 	int result = PrecacheModel(model);
