@@ -53,8 +53,7 @@ public void RegisterCommands()
 {
 	RegAdminCmd("ts_reloadmodels", ReloadModelsList, ADMFLAG_GENERIC, "Reload custom models file");
 	RegConsoleCmd("ts_buy", BuyShield, "Buy the tactical shield");
-	RegConsoleCmd("ts_deploy", DeployShield, "Deploy the tactical shield");
-	RegConsoleCmd("ts_remove", RemoveShield, "Remove the tactical shield");
+	RegConsoleCmd("ts_toggle", ToggleShield, "Toggle the tactical shield");
 	RegConsoleCmd("ts_help", ShowHelp, "Show plugin help");
 	RegConsoleCmd("say !ts_help", ShowHelp, "Show plugin help");
 }

@@ -65,7 +65,7 @@ public void OnPluginStart()
 	CreateConVars(VERSION);
 	RegisterCommands();
 	ReadCustomModelsFile();
-
+	
 	for(int i = 1; i <= MaxClients; i++)
 	{
 		if (IsValidClient(i) && !IsFakeClient(i))
@@ -81,7 +81,10 @@ public void OnPluginStart()
 */
 public void OnMapStart()
 {
+	ReadCustomModelsFile();
 	PrecacheModel(defaultShieldModel, true);
+	if (!StrEqual(customShieldModel, "", false))
+		PrecacheModel(customShieldModel, true);
 }
 
 /**
@@ -171,9 +174,7 @@ public Action ShowHelp(int client_index, int args)
 	PrintToConsole(client_index, "|---- CONSOLE ----|-- IN CHAT --|-- DESCRIPTION --------|");
 	PrintToConsole(client_index, "|ts_buy           |             |Buy shield             |");
 	PrintToConsole(client_index, "|-----------------|-------------|-----------------------|");
-	PrintToConsole(client_index, "|ts_deploy        |             |Deploy the shield      |");
-	PrintToConsole(client_index, "|-----------------|-------------|-----------------------|");
-	PrintToConsole(client_index, "|ts_remove        |             |Remove the shield      |");
+	PrintToConsole(client_index, "|ts_toggle        |             |Toggle the shield      |");
 	PrintToConsole(client_index, "|-----------------|-------------|-----------------------|");
 	PrintToConsole(client_index, "|ts_help          |!ts_help     |Display this help      |");
 	PrintToConsole(client_index, "|-----------------|-------------|-----------------------|");
@@ -185,11 +186,11 @@ public Action ShowHelp(int client_index, int args)
 	PrintToConsole(client_index, "Press +use when holding the shield to switch between 'full' mode and 'half' mode");
 	PrintToConsole(client_index, "Shield is automatically removed when switching weapons");
 	PrintToConsole(client_index, "");
-	PrintToConsole(client_index, "For a better experience, you should bind ts_buy and ts_deploy to a key:");
+	PrintToConsole(client_index, "For a better experience, you should bind ts_buy and ts_toggle to a key:");
 	PrintToConsole(client_index, "bind 'KEY' 'COMMAND' | This will bind 'COMMAND to 'KEY'");
 	PrintToConsole(client_index, "EXAMPLE:");
 	PrintToConsole(client_index, "bind \"z\" \"ts_buy\" | This will bind the buy command to the <Z> key");
-	PrintToConsole(client_index, "bind \"x\" \"ts_deploy\" | This will bind the deploy command to the <X> key");
+	PrintToConsole(client_index, "bind \"x\" \"ts_toggle\" | This will bind the toggle command to the <X> key");
 
 	CPrintToChat(client_index, "{green}----- TACTICAL SHIELD HELP -----");
 	CPrintToChat(client_index, "{lime}>>> START");
@@ -221,33 +222,20 @@ public Action BuyShield(int client_index, int args)
 		return Plugin_Handled;
 	}
 	SetEntProp(client_index, Prop_Send, "m_iAccount", money - cvar_price.IntValue);
-	PrintHintText(client_index, "Use ts_deploy command to use your shield");
+	PrintHintText(client_index, "Use <font color='#00ff00'>ts_toggle</font> command to use your shield");
 	hasShield[client_index] = true;
 	return Plugin_Handled;
 }
 
 /**
-* Deploy the shield for the player using te command if he is holding a pistol.
+* Toggle the shield for the player using te command.
 */
-public Action DeployShield(int client_index, int args)
+public Action ToggleShield(int client_index, int args)
 {
-	if (!hasShield[client_index])
-	{
-		PrintHintText(client_index, "<font color='#ff0000' size='30'>You don't have a shield</font>");
-		return Plugin_Handled;
-	}
-	if (IsHoldingShield(client_index))
-	{
-		PrintHintText(client_index, "<font color='#ff0000' size='30'>Shield already deployed</font>");
-		return Plugin_Handled;
-	}
-	if (!IsHoldingPistol(client_index))
-	{
-		PrintHintText(client_index, "<font color='#ff0000' size='30'>You must hold your pistol to use the shield</font>");
-		return Plugin_Handled;
-	}
-	PrintHintText(client_index, "Use ts_remove command to remove your shield");
-	CreateShield(client_index);
+	if (!IsHoldingShield(client_index))
+		TryDeployShield(client_index);
+	else
+		DeleteShield(client_index);
 	return Plugin_Handled;
 }
 
@@ -258,6 +246,27 @@ public Action RemoveShield(int client_index, int args)
 {
 	DeleteShield(client_index);
 	return Plugin_Handled;
+}
+
+/**
+* Deploy the shield for the specified player if he is holding a pistol.
+*
+* @param client_index			Index of the client.
+*/
+public void TryDeployShield(int client_index)
+{
+	if (!hasShield[client_index])
+	{
+		PrintHintText(client_index, "<font color='#ff0000' size='30'>You don't have a shield</font>");
+		return;
+	}
+	if (!IsHoldingPistol(client_index))
+	{
+		PrintHintText(client_index, "<font color='#ff0000' size='30'>You must hold your pistol to use the shield</font>");
+		return;
+	}
+	PrintHintText(client_index, "Use <font color='#00ff00'>ts_toggle</font> command to remove your shield");
+	CreateShield(client_index);
 }
 
 /************************************************************************************************************
@@ -448,8 +457,11 @@ public void ReadModel(char line[PLATFORM_MAX_PATH])
 {
 	ReplaceString(line, sizeof(line), "model=", "", false);
 	ReplaceString(line, sizeof(line), "\n", "", false);
-	if (TryPrecacheCamModel(line))
+	if (TryPrecacheModel(line))
+	{
 		Format(customShieldModel, sizeof(customShieldModel), "%s", line);
+		AddFileToDownloadsTable(customShieldModel);
+	}
 	else
 		customShieldModel = "";
 }
@@ -500,7 +512,7 @@ public void SetCustomTransform(File file, bool isPos, bool isFull)
 * Try to precache the given model.
 * If a model cannot be precached, it means it is not valid.
 */
-public bool TryPrecacheCamModel(char[] model)
+public bool TryPrecacheModel(char[] model)
 {
 	int result = PrecacheModel(model);
 	if (result < 1)
