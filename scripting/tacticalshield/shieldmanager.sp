@@ -61,15 +61,16 @@ public void CreateShield(int client_index)
 			SetEntityModel(shield, defaultShieldModel);
 		DispatchKeyValue(shield, "solid", "6");
 		SetEntProp(shield, Prop_Data, "m_CollisionGroup", 1); // Stop collisions with players / world
+		SetEntPropEnt(shield, Prop_Send, "m_hOwnerEntity", client_index);
 		DispatchSpawn(shield);
 		ActivateEntity(shield);
 
 		SetEntityMoveType(shield, MOVETYPE_NONE)
-		SetVariantString("!activator"); AcceptEntityInput(shield, "SetParent", client_index, shield, 0);
-		SetShieldPos(client_index, true);
+		
+		SetShieldPos(client_index);
 		isShieldFull[client_index] = true;
 		canChangeState[client_index] = true;
-
+		
 		SDKHook(client_index, SDKHook_OnTakeDamage, Hook_TakeDamageShield);
 		SDKHook(client_index, SDKHook_WeaponSwitch, Hook_WeaponSwitch);
 	}
@@ -100,11 +101,11 @@ public void ToggleShieldState(int client_index)
 {
 	if (canChangeState[client_index])
 	{
-		SetShieldPos(client_index, !isShieldFull[client_index]);
 		isShieldFull[client_index] = !isShieldFull[client_index];
 		canChangeState[client_index] = false;
 		int ref = EntIndexToEntRef(client_index);
 		CreateTimer(shieldCooldown, Timer_ShieldCooldown, ref);
+		SetShieldPos(client_index);
 	}
 }
 
@@ -115,12 +116,17 @@ public void ToggleShieldState(int client_index)
 * @param client_index        Index of the client.
 * @param isFull              Shield position.
 */
-public void SetShieldPos(int client_index, bool isFull)
+public void SetShieldPos(int client_index)
 {
+	float clientPos[3], clientAngles[3];
+	GetClientAbsOrigin(client_index, clientPos);
+	GetClientEyeAngles(client_index, clientAngles);
 	float pos[3], rot[3];
+	AcceptEntityInput(shields[client_index], "SetParent");
+	SetVariantString("!activator"); AcceptEntityInput(shields[client_index], "SetParent", client_index, shields[client_index], 0);
 	for (int i = 0; i < 3; i++)
 	{
-		if (!isFull)
+		if (!isShieldFull[client_index])
 		{
 			if (useCustomModel)
 			{
@@ -148,6 +154,7 @@ public void SetShieldPos(int client_index, bool isFull)
 		}
 	}
 	TeleportEntity(shields[client_index], pos, rot, NULL_VECTOR);
+	SetVariantString("facemask"); AcceptEntityInput(shields[client_index], "SetParentAttachmentMaintainOffset");
 }
 
 /**

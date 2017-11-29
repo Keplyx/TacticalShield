@@ -113,6 +113,8 @@ public void OnClientDisconnect(int client_index)
 public void ResetPlayerVars(int client_index)
 {
 	hasShield[client_index] = false;
+	isShieldFull[client_index] = true;
+	canChangeState[client_index] = true;
 }
 
 /**
@@ -125,6 +127,8 @@ public void InitVars()
 	for (int i = 0; i < sizeof(hasShield); i++)
 	{
 		hasShield[i] = false;
+		isShieldFull[i] = true;
+		canChangeState[i] = true;
 		shields[i] = -1;
 	}
 }
