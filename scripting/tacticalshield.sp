@@ -458,10 +458,7 @@ public void ReadModel(char line[PLATFORM_MAX_PATH])
 	ReplaceString(line, sizeof(line), "model=", "", false);
 	ReplaceString(line, sizeof(line), "\n", "", false);
 	if (TryPrecacheModel(line))
-	{
 		Format(customShieldModel, sizeof(customShieldModel), "%s", line);
-		AddFileToDownloadsTable(customShieldModel);
-	}
 	else
 		customShieldModel = "";
 }
