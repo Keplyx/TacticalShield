@@ -3,7 +3,7 @@
 // -----------------------------------------------------------------------------
 
 // Specify the model you want to use for your shield
-// Enter model path relative to the csgo/ folder (eg: models/custom/drone.mdl)
+// Enter model path relative to the csgo/ folder (eg: models/custom/shield.mdl)
 // Be sure to change the shield position/rotation to suit your model.
 
 // -----------------------------------------------------------------------------
@@ -11,12 +11,12 @@
 // -----------------------------------------------------------------------------
 
 
-model=models/props/de_overpass/overpass_metal_door02.mdl
+model=models/custom_prop/ggc-plg-killzone/shield2/shield2.mdl
 // Shield pos/rot when fully covering player
 pos{
-x=20.0
+x=15.0
 y=0.0
-z=0.0
+z=-35.0
 }
 rot{
 x=0.0
@@ -26,12 +26,12 @@ z=0.0
 // Shield pos/rot when moved aside to shoot (must at least clear the center of the screen)
 movedpos{
 x=0.0
-y=30.0
-z=0.0
+y=15.0
+z=-50.0
 }
 movedrot{
 x=0.0
-y=45.0
+y=70.0
 z=0.0
 }
 

@@ -65,8 +65,9 @@ public void CreateShield(int client_index)
 		DispatchSpawn(shield);
 		ActivateEntity(shield);
 
-		SetEntityMoveType(shield, MOVETYPE_NONE)
-		
+		SetEntityMoveType(shield, MOVETYPE_NONE);
+		SetVariantString("!activator"); AcceptEntityInput(shield, "SetParent", client_index, shield, 0);
+		SetVariantString("facemask"); AcceptEntityInput(shield, "SetParentAttachmentMaintainOffset");
 		SetShieldPos(client_index);
 		isShieldFull[client_index] = true;
 		canChangeState[client_index] = true;
@@ -122,8 +123,7 @@ public void SetShieldPos(int client_index)
 	GetClientAbsOrigin(client_index, clientPos);
 	GetClientEyeAngles(client_index, clientAngles);
 	float pos[3], rot[3];
-	AcceptEntityInput(shields[client_index], "SetParent");
-	SetVariantString("!activator"); AcceptEntityInput(shields[client_index], "SetParent", client_index, shields[client_index], 0);
+	
 	for (int i = 0; i < 3; i++)
 	{
 		if (!isShieldFull[client_index])
@@ -154,7 +154,6 @@ public void SetShieldPos(int client_index)
 		}
 	}
 	TeleportEntity(shields[client_index], pos, rot, NULL_VECTOR);
-	SetVariantString("facemask"); AcceptEntityInput(shields[client_index], "SetParentAttachmentMaintainOffset");
 }
 
 /**

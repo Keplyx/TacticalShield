@@ -1,0 +1,14 @@
+"VertexlitGeneric"
+{
+	"$basetexture"	"models/custom_prop/ggc-plg-killzone/shield2/glass"
+	"$translucent"	"1"
+$selfillium "1"
+	"$detailscale" 	"1"
+	"$detailblendfactor"	"0.6"
+	"$detailblendmode"	"0"
+
+	"$phong"	"1"
+	"$phongexponent"	"40"
+	"$phongboost"	1
+	"$phongfresnelranges"	"[0.5 0.5 1]"
+}
