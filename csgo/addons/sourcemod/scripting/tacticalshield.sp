@@ -327,7 +327,7 @@ public Action OnPlayerRunCmd(int client_index, int &buttons, int &impulse, float
 		}
 		else
 		{
-			float fUnlockTime = GetGameTime() + 0.5;
+			float fUnlockTime = GetGameTime() + 0.1;
 			SetEntPropFloat(client_index, Prop_Send, "m_flNextAttack", fUnlockTime);
 
 			float walkSpeed = cvar_speed.FloatValue;

@@ -14,7 +14,7 @@
 model=models/custom_prop/ggc-plg-killzone/shield2/shield2.mdl
 // Shield pos/rot when fully covering player
 pos{
-x=15.0
+x=20.0
 y=0.0
 z=-35.0
 }

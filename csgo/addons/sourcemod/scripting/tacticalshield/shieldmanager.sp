@@ -31,15 +31,15 @@ bool canChangeState[MAXPLAYERS + 1];
 
 bool useCustomModel = false;
 
-float defaultPos[3] = {20.0, 0.0, 0.0};
+float defaultPos[3] = {20.0, 0.0, -70.0};
 float defaultRot[3] = {0.0, 0.0, 0.0};
-float defaultMovedPos[3] = {0.0, 30.0, 0.0};
-float defaultMovedRot[3] = {0.0, 45.0, 0.0};
+float defaultMovedPos[3] = {0.0, 15.0, -70.0};
+float defaultMovedRot[3] = {0.0, 80.0, 0.0};
 float customPos[3];
 float customRot[3];
 float customMovedPos[3];
 float customMovedRot[3];
-float shieldCooldown = 1.0;
+float shieldCooldown = 0.5;
 
 
 /**
