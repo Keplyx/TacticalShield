@@ -72,7 +72,6 @@ public void CreateShield(int client_index)
 		isShieldFull[client_index] = true;
 		canChangeState[client_index] = true;
 		
-		SDKHook(client_index, SDKHook_OnTakeDamage, Hook_TakeDamageShield);
 		SDKHook(client_index, SDKHook_WeaponSwitch, Hook_WeaponSwitch);
 	}
 }
@@ -84,7 +83,6 @@ public void CreateShield(int client_index)
 */
 public void DeleteShield(int client_index)
 {
-	SDKUnhook(client_index, SDKHook_OnTakeDamage, Hook_TakeDamageShield);
 	SDKUnhook(client_index, SDKHook_WeaponSwitch, Hook_WeaponSwitch);
 	if (IsValidEdict(shields[client_index]))
 	{
@@ -176,30 +174,4 @@ public Action Timer_ShieldCooldown(Handle timer, any ref)
 	canChangeState[client_index] = true;
 }
 
-/**
-* When the shield holder is taking damage, trace a ray between the damage position and the damage origin.
-* If the ray hits the shield, negate the damage.
-*/
-public Action Hook_TakeDamageShield(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
-{
-	if (attacker < 1 || attacker > MAXPLAYERS)
-		return Plugin_Continue;
-	float attackerPos[3];
-	GetClientEyePosition(attacker, attackerPos);
 
-	Handle trace = TR_TraceRayFilterEx(attackerPos, damagePosition, MASK_SHOT, RayType_EndPoint, TraceFilterShield, shields[victim]);
-	if(trace != INVALID_HANDLE && TR_DidHit(trace))
-	{
-		damage = 0.0;
-		return Plugin_Changed;
-	}
-	return Plugin_Continue;
-}
-
-/**
-* Filter for trace rays returning true only if the entity is the one specified in the data parameter.
-*/
-public bool TraceFilterShield(int entity_index, int mask, any data)
-{
-	return entity_index == data;
-}

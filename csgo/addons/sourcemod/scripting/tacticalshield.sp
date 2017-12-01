@@ -66,7 +66,7 @@ public void OnPluginStart()
 	RegisterCommands();
 	ReadCustomModelsFile();
 	
-	for(int i = 1; i <= MaxClients; i++)
+	for(int i = 1; i <= MAXPLAYERS; i++)
 	{
 		if (IsValidClient(i) && !IsFakeClient(i))
 			OnClientPostAdminCheck(i);
@@ -94,6 +94,7 @@ public void OnClientPostAdminCheck(int client_index)
 {
 	int ref = EntIndexToEntRef(client_index);
 	CreateTimer(3.0, Timer_WelcomeMessage, ref);
+	SDKHook(client_index, SDKHook_OnTakeDamage, Hook_TakeDamagePlayer);
 }
 
 /**
@@ -103,6 +104,7 @@ public void OnClientDisconnect(int client_index)
 {
 	DeleteShield(client_index);
 	ResetPlayerVars(client_index);
+	SDKUnhook(client_index, SDKHook_OnTakeDamage, Hook_TakeDamagePlayer);
 }
 
 /**
@@ -374,7 +376,10 @@ public void LimitSpeed(int client_index, float maxSpeed)
  */
 public bool IsHoldingShield(int client_index)
 {
-	return shields[client_index] > 0;
+	if (!IsValidClient(client_index))
+		return false
+	else
+		return shields[client_index] > 0;
 }
 
 /**
@@ -523,4 +528,55 @@ public bool TryPrecacheModel(char[] model)
 	}
 	PrintToServer("Successfully precached custom model '%s'", model);
 	return true;
+}
+
+
+
+
+/**
+* When the a player is taking damage and someone is holding a shield, trace a ray between the damage position and the damage origin.
+* If the ray hits the shield, negate the damage.
+*/
+public Action Hook_TakeDamagePlayer(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
+{
+	if (attacker < 1 || attacker > MAXPLAYERS)
+		return Plugin_Continue;
+	bool isHoldingShield = false;
+	for (int i = 1; i <= MAXPLAYERS; i++)
+	{
+		if (IsHoldingShield(i))
+		{
+			isHoldingShield = true;
+			break;
+		}
+	}
+	if (!isHoldingShield)
+		return Plugin_Continue;
+	float attackerPos[3];
+	GetClientEyePosition(attacker, attackerPos);
+
+	Handle trace = TR_TraceRayFilterEx(attackerPos, damagePosition, MASK_SHOT, RayType_EndPoint, TraceFilterShield, 0);
+	if(trace != INVALID_HANDLE && TR_DidHit(trace))
+	{
+		damage = 0.0;
+		return Plugin_Changed;
+	}
+	return Plugin_Continue;
+}
+
+/**
+* Filter for trace rays returning true only if the entity is a shield.
+*/
+public bool TraceFilterShield(int entity_index, int mask, any data)
+{
+	bool hit = false
+	for (int i = 1; i <= MAXPLAYERS; i++)
+	{
+		if (IsHoldingShield(i) && entity_index == shields[i])
+		{
+			hit = true;
+			break;
+		}
+	}
+	return hit;
 }
