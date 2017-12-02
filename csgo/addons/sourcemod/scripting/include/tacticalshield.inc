@@ -1,5 +1,5 @@
 /*
-*   This file is part of Cameras and Drones.
+*   This file is part of Tactical Shield.
 *   Copyright (C) 2017  Keplyx
 *
 *   This program is free software: you can redistribute it and/or modify

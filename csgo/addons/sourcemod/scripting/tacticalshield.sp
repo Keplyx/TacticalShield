@@ -22,6 +22,7 @@
 #include <sdkhooks>
 #include <cstrike>
 #include <csgocolors>
+#include <tacticalshield>
 
 #pragma newdecls required;
 
