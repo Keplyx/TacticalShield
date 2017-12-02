@@ -540,7 +540,9 @@ public bool IsHoldingPistol(int client_index)
 	int pistol = GetPlayerWeaponSlot(client_index, CS_SLOT_SECONDARY);
 	GetClientWeapon(client_index, weaponName, sizeof(weaponName));
 	GetEdictClassname(pistol, pistolName, sizeof(pistolName));
-	return StrEqual(pistolName, weaponName, false);
+	
+	// pistolName: 'weapon_hkp2000' | weaponName: 'weapon_usp_silencer' USP you bitch
+	return StrEqual(pistolName, weaponName, false) || StrEqual(pistolName, "weapon_hkp2000", false);
 }
 
 /**
