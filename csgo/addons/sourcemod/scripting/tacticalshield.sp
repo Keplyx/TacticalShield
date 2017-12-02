@@ -41,6 +41,8 @@
 #define customModelsPath "gamedata/tacticalshield/custom_models.txt"
 
 bool lateload;
+int playerShieldOverride[MAXPLAYERS + 1];
+
 
 public Plugin myinfo =
 {
@@ -117,6 +119,7 @@ public void ResetPlayerVars(int client_index)
 	hasShield[client_index] = false;
 	isShieldFull[client_index] = true;
 	canChangeState[client_index] = true;
+	playerShieldOverride[client_index] = 0;
 }
 
 /**
@@ -132,6 +135,7 @@ public void InitVars()
 		isShieldFull[i] = true;
 		canChangeState[i] = true;
 		shields[i] = -1;
+		playerShieldOverride[i] = 0;
 	}
 }
 
@@ -221,6 +225,11 @@ public Action BuyShield(int client_index, int args)
 		PrintHintText(client_index, "<font color='#ff0000' size='30'>You already have a shield</font>");
 		return Plugin_Handled;
 	}
+	if (!CanUseShield(client_index))
+	{
+		PrintHintText(client_index, "<font color='#ff0000'>You cannot buy shields</font>");
+		return Plugin_Handled;
+	}
 	int money = GetEntProp(client_index, Prop_Send, "m_iAccount");
 	if (cvar_price.IntValue > money)
 	{
@@ -271,8 +280,92 @@ public void TryDeployShield(int client_index)
 		PrintHintText(client_index, "<font color='#ff0000' size='30'>You must hold your pistol to use the shield</font>");
 		return;
 	}
+	if (!CanUseShield(client_index))
+	{
+		PrintHintText(client_index, "<font color='#ff0000'>You cannot use shields</font>");
+		return;
+	}
 	PrintHintText(client_index, "<font color='#dd3f18'>Commands:</font><br><font color='#00ff00'>ts_toggle</font>: remove your shield<br><font color='#00ff00'>+use</font>: toggle full/half shield mode");
 	CreateShield(client_index);
+}
+
+
+/**
+ * Overrides the given player's shield status.
+ * This way you can have only one player using shields, or specific players not being able to use them.
+ */
+public Action OverrideShield(int client_index, int args)
+{
+	if (args == 0)
+	{
+		PrintToConsole(client_index, "Usage: ts_override <player> <status>");
+		PrintToConsole(client_index, "<status> = 0 | team chosen");
+		PrintToConsole(client_index, "<status> = 1 | cannot use shields");
+		PrintToConsole(client_index, "<status> = 2 | can use shields");
+		return Plugin_Handled;
+	}
+
+	char name[32];
+	int target = -1;
+	GetCmdArg(1, name, sizeof(name));
+	for (int i = 1; i <= MaxClients; i++)
+	{
+		if (!IsClientConnected(i))
+		{
+			continue;
+		}
+		char other[32];
+		GetClientName(i, other, sizeof(other));
+		if (StrEqual(name, other))
+		{
+			target = i;
+		}
+	}
+	if (target == -1)
+	{
+		PrintToConsole(client_index, "Could not find any player with the name: \"%s\"", name);
+		PrintToConsole(client_index, "Available players:");
+		for (int i = 1; i <= MaxClients; i++)
+		{
+			if (!IsClientConnected(i))
+			{
+				continue;
+			}
+			char player[32];
+			GetClientName(i, player, sizeof(player));
+			PrintToConsole(client_index, "\"%s\"", player);
+		}
+		return Plugin_Handled;
+	}
+
+	char arg[32];
+	GetCmdArg(2, arg, sizeof(arg));
+	int status = StringToInt(arg);
+
+	if (status > 2 || status < 0)
+		status = 0;
+
+	playerShieldOverride[target] = status;
+
+	switch (status)
+	{
+		case 0:
+		{
+			PrintToConsole(client_index, "% can use shields like his teammates", name);
+			PrintToConsole(target, "You now use shields like your teammates!");
+		}
+		case 1:
+		{
+			PrintToConsole(client_index, "% cannot use shields anymore", name);
+			PrintToConsole(target, "You can't use shields anymore!");
+		}
+		case 2:
+		{
+			PrintToConsole(client_index, "%s can now use shields", name);
+			PrintToConsole(target, "You can now use shields!");
+		}
+	}
+	return Plugin_Handled;
 }
 
 /************************************************************************************************************
@@ -411,6 +504,21 @@ stock bool IsValidClient(int client)
 		return false;
 	}
 	return IsClientInGame(client);
+}
+
+ /**
+ * Checks if the given player's team can use shields.
+ * Also checks if the player's shield status has been overriden.
+ *
+ * @param client_index		index of the client.
+ * @return					true if the player can use shields, false otherwise.
+ */
+public bool CanUseShield(int client_index)
+{
+	if (!IsValidClient(client_index))
+		return false
+	else
+		return playerShieldOverride[client_index] != 1 && GetClientTeam(client_index) > 1 && ((GetClientTeam(client_index) == cvar_shield_team.IntValue || cvar_shield_team.IntValue == 0) || playerShieldOverride[client_index] == 2);
 }
 
 /**

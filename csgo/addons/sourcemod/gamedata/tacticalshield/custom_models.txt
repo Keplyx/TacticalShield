@@ -6,6 +6,11 @@
 // Enter model path relative to the csgo/ folder (eg: models/custom/shield.mdl)
 // Be sure to change the shield position/rotation to suit your model.
 
+// If players do not see the models, make sure they have downloaded it.
+// To force players to download models, use:
+// "SM File/Folder Downloader and Precacher"
+// https://forums.alliedmods.net/showthread.php?p=602270
+
 // -----------------------------------------------------------------------------
 //                                  MODEL
 // -----------------------------------------------------------------------------

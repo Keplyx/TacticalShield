@@ -20,6 +20,7 @@ ConVar cvar_welcome_message = null;
 
 ConVar cvar_price = null;
 ConVar cvar_speed = null;
+ConVar cvar_shield_team = null;
 
 ConVar cvar_usecustom_model = null;
 
@@ -37,9 +38,10 @@ public void CreateConVars(char[] version)
 	cvar_welcome_message = CreateConVar("ts_welcomemessage", "1", "Displays a welcome message to new players. 0 = no message, 1 = display message", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	cvar_price = CreateConVar("ts_price", "100", "Shield price.", FCVAR_NOTIFY, true, 0.0, true, 50000.0);
 	cvar_speed = CreateConVar("ts_speed", "100", "Player speed when using shield. 130 = walk with knife, 250 = run with knife", FCVAR_NOTIFY, true, 0.0, true, 250.0);
-
-	cvar_usecustom_model = CreateConVar("ts_custommodel", "0", "Set whether to use a model specified in sourcemod/gamedata/tacticalshield/custom_models.txt.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	cvar_shield_team = CreateConVar("ts_shield_team", "0", "Set which team can use shields. This can be overridden per players with the command 'ts_override'. 0 = Everyone, 1 = Nobody, 2 = T only, 3 = CT only", FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	cvar_usecustom_model = CreateConVar("ts_custom_model", "0", "Set whether to use a model specified in sourcemod/gamedata/tacticalshield/custom_models.txt.", FCVAR_NOTIFY, true, 0.0, true, 3.0);
 	cvar_usecustom_model.AddChangeHook(OnCvarChange);
+	
 	cvar_cooldown = CreateConVar("ts_cooldown", "1", "Set the time after which player can change the shield state (full/half).", FCVAR_NOTIFY, true, 0.0, true, 1000.0);
 	cvar_cooldown.AddChangeHook(OnCvarChange);
 
@@ -51,6 +53,7 @@ public void CreateConVars(char[] version)
 */
 public void RegisterCommands()
 {
+	RegAdminCmd("ts_override", OverrideShield, ADMFLAG_GENERIC, "Override shield for a player");
 	RegAdminCmd("ts_reloadmodels", ReloadModelsList, ADMFLAG_GENERIC, "Reload custom models file");
 	RegConsoleCmd("ts_buy", BuyShield, "Buy the tactical shield");
 	RegConsoleCmd("ts_toggle", ToggleShield, "Toggle the tactical shield");
