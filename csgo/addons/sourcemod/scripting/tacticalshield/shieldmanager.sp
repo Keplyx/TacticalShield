@@ -68,9 +68,9 @@ public void CreateShield(int client_index)
 		SetEntityMoveType(shield, MOVETYPE_NONE);
 		SetVariantString("!activator"); AcceptEntityInput(shield, "SetParent", client_index, shield, 0);
 		SetVariantString("facemask"); AcceptEntityInput(shield, "SetParentAttachmentMaintainOffset");
-		SetShieldPos(client_index);
 		isShieldFull[client_index] = true;
 		canChangeState[client_index] = true;
+		SetShieldPos(client_index);
 		
 		SDKHook(client_index, SDKHook_WeaponSwitch, Hook_WeaponSwitch);
 	}

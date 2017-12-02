@@ -271,7 +271,7 @@ public void TryDeployShield(int client_index)
 		PrintHintText(client_index, "<font color='#ff0000' size='30'>You must hold your pistol to use the shield</font>");
 		return;
 	}
-	PrintHintText(client_index, "Use <font color='#00ff00'>ts_toggle</font> command to remove your shield");
+	PrintHintText(client_index, "<font color='#dd3f18'>Commands:</font><br><font color='#00ff00'>ts_toggle</font>: remove your shield<br><font color='#00ff00'>+use</font>: toggle full/half shield mode");
 	CreateShield(client_index);
 }
 
