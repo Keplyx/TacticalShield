@@ -1,42 +1,26 @@
 # [CSGO] Tactical Shield
-
 This plugin adds a tactical shield to the game. It is designed to improve the tactical side of the game.
 
-You can use this plugin along with my plugin [Cameras and Drones](https://github.com/Keplyx/cameras-and-drones).
+You can use this plugin along with my other plugin [Cameras and Drones](https://github.com/Keplyx/cameras-and-drones).
 
+## See the [website](https://keplyx.github.io/tacticalshield/index.html) for more information
 
 ## Installation
 
 Simply download **[tacticalshield.smx](https://github.com/Keplyx/TacticalShield/raw/master/plugins/TacticalShield.smx)** and place it in your server inside "csgo/addons/sourcemod/plugins/".
+More information [here](https://keplyx.github.io/tacticalshield/installation.html).
 
-You can choose your own models to use for shields. To do so, install it in your csgo, then enter the needed informations in [custom_models.txt](https://github.com/Keplyx/TacticalShield/blob/master/gamedata/tacticalshield/custom_models.txt).
 
-A map is currently being made to work along with this plugin. [Get it here!](http://steamcommunity.com/sharedfiles/filedetails/?id=1102250426)
-
-## Features
-
-   * Can buy a tactical shield
-   * Shields block incoming damage (even awp shots)
-   * Can only use shield when holding pistols
-   * Can move aside shield to shoot
-   * Can choose your own shield model
-   
-
-## [:globe_with_meridians: Cvars](https://github.com/Keplyx/TacticalShield/blob/master/tacticalshield.cfg)
+## [Cvars](https://github.com/Keplyx/TacticalShield/blob/master/tacticalshield.cfg)
 
 ## Commands
 
     "ts_buy" (buy your shield)
-    "ts_deploy" (use the shield you just bought)
-    "ts_remove" (remove your shield so it can be used again later)
+    "ts_toggle" (toggle the shield you just bought)
     "ts_help" (Show plugin help)
     
     ADMIN ONLY
     "ts_reloadmodels" (Reload custom models file)
-
-## Media
-Soon
-
-## [:globe_with_meridians: Changlelog](https://github.com/Keplyx/TacticalShield/blob/master/Changlelog.md)
+    "ts_override" (Override player shield status)
 
 ### Creator: Keplyx
