@@ -219,7 +219,9 @@ public Action ShowHelp(int client_index, int args)
 	PrintToConsole(client_index, "|-----------------|-------------|-----------------------|");
 	PrintToConsole(client_index, "|-----------        ADMIN ONLY       -------------------|");
 	PrintToConsole(client_index, "|-----------------|-------------|-----------------------|");
-	PrintToConsole(client_index, "|cd_reloadmodels  |             |Reload custom models   |");
+	PrintToConsole(client_index, "|ts_reloadmodel   |             |Reload custom model    |");
+	PrintToConsole(client_index, "|-----------------|-------------|-----------------------|");
+	PrintToConsole(client_index, "|ts_override      |             |Override shield status |");
 	PrintToConsole(client_index, "|-------------------------------------------------------|");
 	PrintToConsole(client_index, "");
 	PrintToConsole(client_index, "Press +use when holding the shield to switch between 'full' mode and 'half' mode");
