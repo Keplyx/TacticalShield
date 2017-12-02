@@ -53,9 +53,9 @@ public void CreateConVars(char[] version)
 */
 public void RegisterCommands()
 {
-	RegAdminCmd("ts_override", OverrideShield, ADMFLAG_GENERIC, "Override shield for a player");
+	RegAdminCmd("ts_override", OverrideShieldCommand, ADMFLAG_GENERIC, "Override shield for a player");
 	RegAdminCmd("ts_reloadmodels", ReloadModelsList, ADMFLAG_GENERIC, "Reload custom models file");
-	RegConsoleCmd("ts_buy", BuyShield, "Buy the tactical shield");
+	RegConsoleCmd("ts_buy", BuyShieldCommand, "Buy the tactical shield");
 	RegConsoleCmd("ts_toggle", ToggleShield, "Toggle the tactical shield");
 	RegConsoleCmd("ts_help", ShowHelp, "Show plugin help");
 	RegConsoleCmd("say !ts_help", ShowHelp, "Show plugin help");

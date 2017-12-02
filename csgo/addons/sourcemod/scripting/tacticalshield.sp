@@ -161,6 +161,34 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 	ResetPlayerVars(victim);
 }
 
+
+/************************************************************************************************************
+ *											NATIVES
+ ************************************************************************************************************/
+
+public int Native_GivePlayerShield(Handle plugin, int numParams)
+{
+	int client_index = GetNativeCell(1);
+	if (!IsValidClient(client_index))
+	{
+		PrintToServer("Invalid client (%d)", client_index)
+		return;
+	}
+	GetShield(client_index);
+}
+
+public int Native_OverridePlayerShield(Handle plugin, int numParams)
+{
+	int client_index = GetNativeCell(1);
+	if (!IsValidClient(client_index))
+	{
+		PrintToServer("Invalid client (%d)", client_index)
+		return;
+	}
+	int status = GetNativeCell(2);
+	OverrideShield(client_index, status);
+}
+
 /************************************************************************************************************
  *											COMMANDS
  ************************************************************************************************************/
@@ -218,18 +246,8 @@ public Action ShowHelp(int client_index, int args)
 * Buy a new shield for the player using this command.
 * A player can buy a shield if he has enough money and does not already have one.
 */
-public Action BuyShield(int client_index, int args)
+public Action BuyShieldCommand(int client_index, int args)
 {
-	if (hasShield[client_index])
-	{
-		PrintHintText(client_index, "<font color='#ff0000' size='30'>You already have a shield</font>");
-		return Plugin_Handled;
-	}
-	if (!CanUseShield(client_index))
-	{
-		PrintHintText(client_index, "<font color='#ff0000'>You cannot buy shields</font>");
-		return Plugin_Handled;
-	}
 	int money = GetEntProp(client_index, Prop_Send, "m_iAccount");
 	if (cvar_price.IntValue > money)
 	{
@@ -237,9 +255,24 @@ public Action BuyShield(int client_index, int args)
 		return Plugin_Handled;
 	}
 	SetEntProp(client_index, Prop_Send, "m_iAccount", money - cvar_price.IntValue);
+	GetShield(client_index);
+	return Plugin_Handled;
+}
+
+public void GetShield(int client_index)
+{
+	if (hasShield[client_index])
+	{
+		PrintHintText(client_index, "<font color='#ff0000' size='30'>You already have a shield</font>");
+		return;
+	}
+	if (!CanUseShield(client_index))
+	{
+		PrintHintText(client_index, "<font color='#ff0000'>You cannot get shields</font>");
+		return;
+	}
 	PrintHintText(client_index, "Use <font color='#00ff00'>ts_toggle</font> command to use your shield");
 	hasShield[client_index] = true;
-	return Plugin_Handled;
 }
 
 /**
@@ -294,7 +327,7 @@ public void TryDeployShield(int client_index)
  * Overrides the given player's shield status.
  * This way you can have only one player using shields, or specific players not being able to use them.
  */
-public Action OverrideShield(int client_index, int args)
+public Action OverrideShieldCommand(int client_index, int args)
 {
 	if (args == 0)
 	{
@@ -308,6 +341,50 @@ public Action OverrideShield(int client_index, int args)
 	char name[32];
 	int target = -1;
 	GetCmdArg(1, name, sizeof(name));
+	target = FindPlayerOfName(name);
+	if (target == -1)
+	{
+		PrintToConsole(client_index, "Could not find any player with the name: \"%s\"", name);
+		PrintToConsole(client_index, "Available players:");
+		ShowPlayerList(client_index);
+		return Plugin_Handled;
+	}
+
+	char arg[32];
+	GetCmdArg(2, arg, sizeof(arg));
+	int status = StringToInt(arg);
+	OverrideShield(target, status);
+	return Plugin_Handled;
+}
+
+/**
+* Show a list of connected clients to the specified player.
+*
+* @param client_index			Index of the client.
+*/
+public void ShowPlayerList(int client_index)
+{
+	for (int i = 1; i <= MaxClients; i++)
+	{
+		if (!IsClientConnected(i))
+		{
+			continue;
+		}
+		char player[32];
+		GetClientName(i, player, sizeof(player));
+		PrintToConsole(client_index, "\"%s\"", player);
+	}
+}
+
+/**
+* Find a client by his name.
+*
+* @param name			Name of the client.
+* @return 				Client index.
+*/
+public int FindPlayerOfName(char name[32])
+{
+	int target = -1;
 	for (int i = 1; i <= MaxClients; i++)
 	{
 		if (!IsClientConnected(i))
@@ -321,51 +398,26 @@ public Action OverrideShield(int client_index, int args)
 			target = i;
 		}
 	}
-	if (target == -1)
-	{
-		PrintToConsole(client_index, "Could not find any player with the name: \"%s\"", name);
-		PrintToConsole(client_index, "Available players:");
-		for (int i = 1; i <= MaxClients; i++)
-		{
-			if (!IsClientConnected(i))
-			{
-				continue;
-			}
-			char player[32];
-			GetClientName(i, player, sizeof(player));
-			PrintToConsole(client_index, "\"%s\"", player);
-		}
-		return Plugin_Handled;
-	}
+	return target;
+}
 
-	char arg[32];
-	GetCmdArg(2, arg, sizeof(arg));
-	int status = StringToInt(arg);
-
+/**
+* Override shield status for the specified player.
+*
+* @param client_index			Index of the client.
+* @param status					override status. 0= no override, 1= force no shields, 2= force shields.
+*/
+public void OverrideShield(int client_index, int status)
+{
 	if (status > 2 || status < 0)
 		status = 0;
-
-	playerShieldOverride[target] = status;
-
+	playerShieldOverride[client_index] = status;
 	switch (status)
 	{
-		case 0:
-		{
-			PrintToConsole(client_index, "% can use shields like his teammates", name);
-			PrintToConsole(target, "You now use shields like your teammates!");
-		}
-		case 1:
-		{
-			PrintToConsole(client_index, "% cannot use shields anymore", name);
-			PrintToConsole(target, "You can't use shields anymore!");
-		}
-		case 2:
-		{
-			PrintToConsole(client_index, "%s can now use shields", name);
-			PrintToConsole(target, "You can now use shields!");
-		}
+		case 0: PrintToConsole(client_index, "You now use shields like your teammates!");
+		case 1: PrintToConsole(client_index, "You can't use shields anymore!");
+		case 2: PrintToConsole(client_index, "You can now use shields!");
 	}
-	return Plugin_Handled;
 }
 
 /************************************************************************************************************
