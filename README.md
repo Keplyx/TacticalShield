@@ -7,7 +7,7 @@ You can use this plugin along with my other plugin [Cameras and Drones](https://
 
 ## Installation
 
-Simply download **[tacticalshield.smx](https://github.com/Keplyx/TacticalShield/raw/master/plugins/TacticalShield.smx)** and place it in your server inside "csgo/addons/sourcemod/plugins/".
+Simply download **[tacticalshield.smx](https://github.com/Keplyx/tacticalshield/raw/master/csgo/addons/sourcemod/plugins/tacticalshield.smx)** and place it in your server inside "csgo/addons/sourcemod/plugins/".
 More information [here](https://keplyx.github.io/TacticalShield/installation.html).
 
 

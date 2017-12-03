@@ -42,3 +42,12 @@ native void GivePlayerShield(int client);
  * @error					Invalid client.
  */
 native void OverridePlayerShield(int client, int override);
+
+/**
+ * Remove the shield for the specified player.
+ *
+ * @param client			Client index.
+ * @return
+ * @error					Invalid client.
+ */
+native void RemovePlayerShield(int client);
