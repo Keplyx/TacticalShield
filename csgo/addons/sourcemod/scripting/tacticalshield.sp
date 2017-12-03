@@ -57,6 +57,9 @@ public Plugin myinfo =
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
 	lateload = late;
+	CreateNative("GivePlayerShield", Native_GivePlayerShield);
+	CreateNative("OverridePlayerShield", Native_OverridePlayerShield);
+	CreateNative("RemovePlayerShield", Native_RemovePlayerShield);
 	return APLRes_Success;
 }
 
@@ -188,6 +191,18 @@ public int Native_OverridePlayerShield(Handle plugin, int numParams)
 	}
 	int status = GetNativeCell(2);
 	OverrideShield(client_index, status);
+}
+
+public int Native_RemovePlayerShield(Handle plugin, int numParams)
+{
+	int client_index = GetNativeCell(1);
+	if (!IsValidClient(client_index))
+	{
+		PrintToServer("Invalid client (%d)", client_index)
+		return;
+	}
+	if (IsHoldingShield(client_index))
+		DeleteShield(client_index);
 }
 
 /************************************************************************************************************
