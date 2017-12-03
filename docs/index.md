@@ -20,7 +20,7 @@ This plugin adds a tactical shield (or ballistic shield) to the game. It is desi
 
 ### [Cvars](https://github.com/Keplyx/tacticalshield/blob/master/csgo/cfg/sourcemod/tacticalshield.cfg) / [Commands](commands.md)
 
-### [Current Issues](https://github.com/Keplyx/tacticalshield/issues/1) / [Report Bugs](https://github.com/Keplyx/tacticalshield/issues)
+### [Report Bugs](https://github.com/Keplyx/TacticalShield/issues)
 
 ## [>> Changlelog](changlelog.md)
 
