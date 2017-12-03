@@ -6,7 +6,7 @@
 
 
 ## Video
-Soon
+<iframe width="560" height="315" src="https://www.youtube.com/embed/3LSul0V9eTo" frameborder="0" allowfullscreen></iframe>
 
 ## Screenshots
 ![screenshot_20171203_110630](https://user-images.githubusercontent.com/23726131/33524482-5a4a16d8-d81e-11e7-9772-2ca653728f40.png)
