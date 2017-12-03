@@ -16,24 +16,29 @@
 *   along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-ConVar cvar_welcome_message = null;
+#if defined _tacticalshield_included
+ #endinput
+#endif
 
-public void CreateConVars(char[] version)
-{
-	CreateConVar("chickenwars_version", version, "Chicken Strike", FCVAR_SPONLY | FCVAR_REPLICATED | FCVAR_NOTIFY | FCVAR_DONTRECORD);
-	cvar_welcome_message = CreateConVar("cw_welcomemessage", "1", "Displays a welcome message to new players. 0 = no message, 1 = display message", FCVAR_NOTIFY, true, 0.0, true, 1.0);
-	
-	AutoExecConfig(true, "chickenwars");
-}
+#define _tacticalshield_included
+ 
 
-public void IntiCvars()
-{
-	
-}
+/**
+ * Give the specified player a shield, if he can have one.
+ * It is the same as the command ts_buy but without using money.
+ *
+ * @param client			Client index.
+ * @return
+ * @error					Invalid client.
+ */
+native void GivePlayerShield(int client);
 
-
-
-public void RegisterCommands()
-{
-	
-}
+/**
+ * Override shield status for the specified player.
+ *
+ * @param client			Client index.
+ * @param override			Override parameter: 0= no override, 1= force no shields, 2= force shields.
+ * @return
+ * @error					Invalid client.
+ */
+native void OverridePlayerShield(int client, int override);
