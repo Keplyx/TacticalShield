@@ -31,11 +31,11 @@
 
 /*  New in this version
 *
-*	Not released yet...
+*	First release!
 *
 */
 
-#define VERSION "0.0.1"
+#define VERSION "1.0.0"
 #define PLUGIN_NAME "Tactical Shield"
 #define AUTHOR "Keplyx"
 
@@ -51,7 +51,7 @@ public Plugin myinfo =
 	author = AUTHOR,
 	description = "Tactical shield to protect yourself.",
 	version = VERSION,
-	url = "https://github.com/Keplyx/TacticalShield"
+	url = "https://keplyx.github.io/TacticalShield/index.html"
 }
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
