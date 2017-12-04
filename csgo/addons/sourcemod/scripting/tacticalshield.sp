@@ -644,6 +644,19 @@ public void ReadCustomModelsFile()
 	char path[PLATFORM_MAX_PATH], line[PLATFORM_MAX_PATH];
 	BuildPath(Path_SM, path, sizeof(path), "%s", customModelsPath);
 	File file = OpenFile(path, "r");
+	if (!FileExists(path))
+	{
+		customShieldModel = "";
+		for (int i = 0; i < sizeof(customPos); i++)
+		{
+			customPos[i] = defaultPos[i];
+			customRot[i] = defaultRot[i];
+			customMovedPos[i] = defaultMovedPos[i];
+			customMovedRot[i] = defaultMovedRot[i];
+		}
+		PrintToServer("Could not find custom models file. Falling back to default");
+		return;
+	}
 	while (file.ReadLine(line, sizeof(line)))
 	{
 		if (StrContains(line, "//", false) == 0)
