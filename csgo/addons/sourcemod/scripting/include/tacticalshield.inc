@@ -21,7 +21,27 @@
 #endif
 
 #define _tacticalshield_included
- 
+
+public SharedPlugin __pl_tacticalshield = 
+{
+	name = "tacticalshield",
+	file = "tacticalshield.smx",
+#if defined REQUIRE_PLUGIN
+	required = 1,
+#else
+	required = 0,
+#endif
+};
+
+
+#if !defined REQUIRE_PLUGIN
+public void __pl_tacticalshield_SetNTVOptional()
+{
+	MarkNativeAsOptional("GivePlayerShield");
+	MarkNativeAsOptional("OverridePlayerShield");
+	MarkNativeAsOptional("RemovePlayerShield");
+}
+#endif
 
 /**
  * Give the specified player a shield, if he can have one.

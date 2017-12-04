@@ -24,6 +24,9 @@
 #include <csgocolors>
 #include <tacticalshield>
 
+#undef REQUIRE_PLUGIN
+#include <camerasanddrones>
+
 #pragma newdecls required;
 
 #include "tacticalshield/init.sp"
@@ -35,13 +38,14 @@
 *
 */
 
-#define VERSION "1.0.0"
+#define VERSION "1.0.1"
 #define PLUGIN_NAME "Tactical Shield"
 #define AUTHOR "Keplyx"
 
 #define customModelsPath "gamedata/tacticalshield/custom_models.txt"
 
 bool lateload;
+bool camerasAndDrones;
 int playerShieldOverride[MAXPLAYERS + 1];
 
 
@@ -60,6 +64,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("GivePlayerShield", Native_GivePlayerShield);
 	CreateNative("OverridePlayerShield", Native_OverridePlayerShield);
 	CreateNative("RemovePlayerShield", Native_RemovePlayerShield);
+	RegPluginLibrary("tacticalshield");
 	return APLRes_Success;
 }
 
@@ -80,6 +85,27 @@ public void OnPluginStart()
 
 	if (lateload)
 		ServerCommand("mp_restartgame 1");
+}
+
+public void OnAllPluginsLoaded()
+{
+	camerasAndDrones = LibraryExists("cameras-and-drones");
+}
+ 
+public void OnLibraryRemoved(const char[] name)
+{
+	if (StrEqual(name, "cameras-and-drones"))
+	{
+		camerasAndDrones = false;
+	}
+}
+ 
+public void OnLibraryAdded(const char[] name)
+{
+	if (StrEqual(name, "cameras-and-drones"))
+	{
+		camerasAndDrones = true;
+	}
 }
 
 /**
@@ -331,7 +357,7 @@ public void TryDeployShield(int client_index)
 		PrintHintText(client_index, "<font color='#ff0000' size='30'>You must hold your pistol to use the shield</font>");
 		return;
 	}
-	if (!CanUseShield(client_index))
+	if (!CanUseShield(client_index) || (camerasAndDrones && IsPlayerInGear(client_index)))
 	{
 		PrintHintText(client_index, "<font color='#ff0000'>You cannot use shields</font>");
 		return;
@@ -618,6 +644,19 @@ public void ReadCustomModelsFile()
 	char path[PLATFORM_MAX_PATH], line[PLATFORM_MAX_PATH];
 	BuildPath(Path_SM, path, sizeof(path), "%s", customModelsPath);
 	File file = OpenFile(path, "r");
+	if (!FileExists(path))
+	{
+		customShieldModel = "";
+		for (int i = 0; i < sizeof(customPos); i++)
+		{
+			customPos[i] = defaultPos[i];
+			customRot[i] = defaultRot[i];
+			customMovedPos[i] = defaultMovedPos[i];
+			customMovedRot[i] = defaultMovedRot[i];
+		}
+		PrintToServer("Could not find custom models file. Falling back to default");
+		return;
+	}
 	while (file.ReadLine(line, sizeof(line)))
 	{
 		if (StrContains(line, "//", false) == 0)
