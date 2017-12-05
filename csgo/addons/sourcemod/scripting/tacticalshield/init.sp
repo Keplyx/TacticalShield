@@ -26,6 +26,8 @@ ConVar cvar_usecustom_model = null;
 
 ConVar cvar_cooldown = null;
 
+ConVar cvar_buytime = null;
+ConVar cvar_buytime_start = null;
 
 /**
 * Creates plugin convars
@@ -44,7 +46,11 @@ public void CreateConVars(char[] version)
 	
 	cvar_cooldown = CreateConVar("ts_cooldown", "1", "Set the time after which player can change the shield state (full/half).", FCVAR_NOTIFY, true, 0.0, true, 1000.0);
 	cvar_cooldown.AddChangeHook(OnCvarChange);
-
+	
+	cvar_buytime = CreateConVar("ts_buytime", "20", "Set how much time (in seconds) players have to buy a shield. -2 to use 'mp_buytime' value, -1 = forever", FCVAR_NOTIFY, true, -2.0, true, 1000.0);
+	cvar_buytime_start = CreateConVar("ts_buytime_start", "0", "Set when to start buy time counter. 0 = on round start, 1 = on spawn", FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	cvar_buytime.AddChangeHook(OnCvarChange);
+	
 	AutoExecConfig(true, "tacticalshield");
 }
 
