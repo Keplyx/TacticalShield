@@ -1,8 +1,14 @@
+---
+layout : default
+title : Changelog
+topbar_link : true
+---
+
 # Changelog
 
-
-### [Back to Home](index.md)
-
+* **Version 1.0.1**
+  * Improved compatibility with [Cameras and drones](https://keplyx.github.io/cameras-and-drones/)
+  * Fixed crash when custom_models.txt was missing from gamedata
 
 * **Version 1.0.0**
   * Initial release

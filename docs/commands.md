@@ -1,9 +1,10 @@
+---
+layout : default
+title : Commands
+topbar_link : true
+---
+
 # Commands
-
-
-### [Back to Home](index.md)
-
-
 
 ## ALL
     ts_buy

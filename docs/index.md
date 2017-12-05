@@ -1,10 +1,13 @@
+---
+layout : default
+title : Home
+---
+
 # Tactical Shield
 
 This plugin adds a tactical shield (or ballistic shield) to the game. It is designed to improve the tactical side of the game.
 
-## [>> Installation](installation.md)
-
-## [>> Preview](media.md)
+Fully compatible with [Cameras and drones](https://keplyx.github.io/cameras-and-drones/)!
 
 ## Features
 
@@ -14,14 +17,5 @@ This plugin adds a tactical shield (or ballistic shield) to the game. It is desi
    * Can move aside shield to shoot
    * Can choose your own shield model
    * Can choose which team can use shields
-   
 
-
-
-### [Cvars](https://github.com/Keplyx/tacticalshield/blob/master/csgo/cfg/sourcemod/tacticalshield.cfg) / [Commands](commands.md)
-
-### [Report Bugs](https://github.com/Keplyx/TacticalShield/issues)
-
-## [>> Changlelog](changlelog.md)
-
-### Creator: [Keplyx](https://keplyx.github.io/)
+### Creator: [Keplyx](https://keplyx.github.io/index.html)
