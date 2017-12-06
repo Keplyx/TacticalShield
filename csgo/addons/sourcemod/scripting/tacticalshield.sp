@@ -34,11 +34,12 @@
 
 /*  New in this version
 *
-*	First release!
+*	Added buy time cvars
+*	Fixed crash when activating shield without a pistol
 *
 */
 
-#define VERSION "1.0.1"
+#define VERSION "1.0.2"
 #define PLUGIN_NAME "Tactical Shield"
 #define AUTHOR "Keplyx"
 
