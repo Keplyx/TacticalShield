@@ -34,11 +34,12 @@
 
 /*  New in this version
 *
-*	First release!
+*	Added buy time cvars
+*	Fixed crash when activating shield without a pistol
 *
 */
 
-#define VERSION "1.0.1"
+#define VERSION "1.0.2"
 #define PLUGIN_NAME "Tactical Shield"
 #define AUTHOR "Keplyx"
 
@@ -47,7 +48,8 @@
 bool lateload;
 bool camerasAndDrones;
 int playerShieldOverride[MAXPLAYERS + 1];
-
+float buyTime;
+bool canBuy[MAXPLAYERS + 1];
 
 public Plugin myinfo =
 {
@@ -72,6 +74,7 @@ public void OnPluginStart()
 {
 	HookEvent("round_start", Event_RoundStart);
 	HookEvent("player_death", Event_PlayerDeath);
+	HookEvent("player_spawn", Event_PlayerSpawn);
 
 	CreateConVars(VERSION);
 	RegisterCommands();
@@ -150,6 +153,7 @@ public void ResetPlayerVars(int client_index)
 	isShieldFull[client_index] = true;
 	canChangeState[client_index] = true;
 	playerShieldOverride[client_index] = 0;
+	canBuy[client_index] = true;
 }
 
 /**
@@ -159,6 +163,7 @@ public void InitVars()
 {
 	useCustomModel = cvar_usecustom_model.BoolValue;
 	shieldCooldown = cvar_cooldown.FloatValue;
+	SetBuyTime();
 	for (int i = 0; i < sizeof(hasShield); i++)
 	{
 		hasShield[i] = false;
@@ -166,7 +171,31 @@ public void InitVars()
 		canChangeState[i] = true;
 		shields[i] = -1;
 		playerShieldOverride[i] = 0;
+		canBuy[i] = true;
 	}
+}
+
+public void SetBuyState(int client_index, bool state)
+{
+	if (IsValidClient(client_index))
+		canBuy[client_index] = state;
+	else
+	{
+		for (int i = 0; i < sizeof(canBuy); i++)
+		{
+			canBuy[i] = state;
+		}
+	}
+}
+
+public void SetBuyTime()
+{
+	if (cvar_buytime.IntValue == -1)
+		buyTime = -1.0;
+	else if (cvar_buytime.IntValue == -2)
+		buyTime = FindConVar("mp_buytime").FloatValue;
+	else
+		buyTime = cvar_buytime.FloatValue;
 }
 
 /************************************************************************************************************
@@ -179,6 +208,12 @@ public void InitVars()
 public void Event_RoundStart(Handle event, const char[] name, bool dontBroadcast)
 {
 	InitVars();
+	if (cvar_buytime_start.IntValue == 0)
+	{
+		SetBuyState(0, true);
+		if (buyTime >= 0)
+			CreateTimer(buyTime, Timer_BuyTime, 0);
+	}
 }
 
 /**
@@ -191,6 +226,20 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 	ResetPlayerVars(victim);
 }
 
+/**
+* Starts buy timer on spawn if enabled.
+*/
+public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
+{
+	int client_index = GetClientOfUserId(GetEventInt(event, "userid"));
+	int ref = EntIndexToEntRef(client_index);
+	if (cvar_buytime_start.IntValue == 1)
+	{
+		SetBuyState(client_index, true);
+		if (buyTime >= 0)
+			CreateTimer(buyTime, Timer_BuyTime, ref);
+	}
+}
 
 /************************************************************************************************************
  *											NATIVES
@@ -204,7 +253,7 @@ public int Native_GivePlayerShield(Handle plugin, int numParams)
 		PrintToServer("Invalid client (%d)", client_index)
 		return;
 	}
-	GetShield(client_index);
+	GetShield(client_index, true);
 }
 
 public int Native_OverridePlayerShield(Handle plugin, int numParams)
@@ -292,18 +341,11 @@ public Action ShowHelp(int client_index, int args)
 */
 public Action BuyShieldCommand(int client_index, int args)
 {
-	int money = GetEntProp(client_index, Prop_Send, "m_iAccount");
-	if (cvar_price.IntValue > money)
-	{
-		PrintHintText(client_index, "<font color='#ff0000' size='30'>Not enough money</font>");
-		return Plugin_Handled;
-	}
-	SetEntProp(client_index, Prop_Send, "m_iAccount", money - cvar_price.IntValue);
-	GetShield(client_index);
+	GetShield(client_index, false);
 	return Plugin_Handled;
 }
 
-public void GetShield(int client_index)
+public void GetShield(int client_index, bool isFree)
 {
 	if (hasShield[client_index])
 	{
@@ -315,6 +357,22 @@ public void GetShield(int client_index)
 		PrintHintText(client_index, "<font color='#ff0000'>You cannot get shields</font>");
 		return;
 	}
+	if (!canBuy[client_index])
+	{
+		PrintHintText(client_index, "<font color='#ff0000'>Buy time expired</font>");
+		return;
+	}
+	if (!isFree)
+	{
+		int money = GetEntProp(client_index, Prop_Send, "m_iAccount");
+		if (cvar_price.IntValue > money)
+		{
+			PrintHintText(client_index, "<font color='#ff0000' size='30'>Not enough money</font>");
+			return;
+		}
+		SetEntProp(client_index, Prop_Send, "m_iAccount", money - cvar_price.IntValue);
+	}
+	
 	PrintHintText(client_index, "Use <font color='#00ff00'>ts_toggle</font> command to use your shield");
 	hasShield[client_index] = true;
 }
@@ -487,6 +545,19 @@ public Action Timer_WelcomeMessage(Handle timer, any ref)
 	}
 }
 
+ /**
+ * Stops players from buying after a time limit.
+ * This limit can be set by cvar.
+ */
+public Action Timer_BuyTime(Handle timer, any ref)
+{
+	int client_index = EntRefToEntIndex(ref);
+	if (IsValidClient(client_index))
+		SetBuyState(client_index, false);
+	else
+		SetBuyState(0, false);
+}
+
 /************************************************************************************************************
  *											INPUT
  ************************************************************************************************************/
@@ -582,6 +653,8 @@ public bool IsHoldingPistol(int client_index)
 	char weaponName[64], pistolName[64];
 	int pistol = GetPlayerWeaponSlot(client_index, CS_SLOT_SECONDARY);
 	GetClientWeapon(client_index, weaponName, sizeof(weaponName));
+	if (!IsValidEdict(pistol))
+		return false;
 	GetEdictClassname(pistol, pistolName, sizeof(pistolName));
 	
 	// pistolName: 'weapon_hkp2000' | weaponName: 'weapon_usp_silencer' USP you bitch
@@ -628,6 +701,8 @@ public void OnCvarChange(ConVar convar, char[] oldValue, char[] newValue)
 		useCustomModel = convar.BoolValue;
 	else if (convar == cvar_cooldown)
 		shieldCooldown = convar.FloatValue;
+	else if (convar == cvar_buytime)
+		SetBuyTime();
 }
 
 
