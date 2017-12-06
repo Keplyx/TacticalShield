@@ -654,6 +654,8 @@ public bool IsHoldingPistol(int client_index)
 	char weaponName[64], pistolName[64];
 	int pistol = GetPlayerWeaponSlot(client_index, CS_SLOT_SECONDARY);
 	GetClientWeapon(client_index, weaponName, sizeof(weaponName));
+	if (!IsValidEdict(pistol))
+		return false;
 	GetEdictClassname(pistol, pistolName, sizeof(pistolName));
 	
 	// pistolName: 'weapon_hkp2000' | weaponName: 'weapon_usp_silencer' USP you bitch
