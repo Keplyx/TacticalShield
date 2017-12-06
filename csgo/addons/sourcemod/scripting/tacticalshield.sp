@@ -555,8 +555,6 @@ public Action Timer_BuyTime(Handle timer, any ref)
 		SetBuyState(client_index, false);
 	else
 		SetBuyState(0, false);
-	
-	PrintToServer("buy time expired");
 }
 
 /************************************************************************************************************
