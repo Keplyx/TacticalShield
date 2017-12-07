@@ -29,6 +29,8 @@ ConVar cvar_cooldown = null;
 ConVar cvar_buytime = null;
 ConVar cvar_buytime_start = null;
 
+ConVar cvar_custom_model_path = null;
+
 /**
 * Creates plugin convars
 *
@@ -51,6 +53,8 @@ public void CreateConVars(char[] version)
 	cvar_buytime_start = CreateConVar("ts_buytime_start", "0", "Set when to start buy time counter. 0 = on round start, 1 = on spawn", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	cvar_buytime.AddChangeHook(OnCvarChange);
 	
+	cvar_custom_model_path = CreateConVar("ts_custom_model_path", "gamedata/tacticalshield", "Set the path to the custom models file, relative to addons/sourcemod", FCVAR_NOTIFY);
+	cvar_custom_model_path.AddChangeHook(OnCvarChange);
 	AutoExecConfig(true, "tacticalshield");
 }
 

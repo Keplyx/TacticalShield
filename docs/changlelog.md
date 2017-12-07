@@ -6,6 +6,9 @@ topbar_link : true
 
 # Changelog
 
+* **Version 1.0.3**
+  * Added custom models path cvar
+
 * **Version 1.0.2**
   * Added buy time cvars
   * Fixed crash when activating shield without a pistol

@@ -34,16 +34,17 @@
 
 /*  New in this version
 *
-*	Added buy time cvars
-*	Fixed crash when activating shield without a pistol
+*	Added custom models path cvar
 *
 */
 
-#define VERSION "1.0.2"
+#define VERSION "1.0.3"
 #define PLUGIN_NAME "Tactical Shield"
 #define AUTHOR "Keplyx"
 
-#define customModelsPath "gamedata/tacticalshield/custom_models.txt"
+#define customModelsFile "/custom_models.txt"
+
+char customModelsPath[256];
 
 bool lateload;
 bool camerasAndDrones;
@@ -77,6 +78,7 @@ public void OnPluginStart()
 	HookEvent("player_spawn", Event_PlayerSpawn);
 
 	CreateConVars(VERSION);
+	InitVars();
 	RegisterCommands();
 	ReadCustomModelsFile();
 	
@@ -163,6 +165,7 @@ public void InitVars()
 {
 	useCustomModel = cvar_usecustom_model.BoolValue;
 	shieldCooldown = cvar_cooldown.FloatValue;
+	cvar_custom_model_path.GetString(customModelsPath, sizeof(customModelsPath));
 	SetBuyTime();
 	for (int i = 0; i < sizeof(hasShield); i++)
 	{
@@ -703,6 +706,8 @@ public void OnCvarChange(ConVar convar, char[] oldValue, char[] newValue)
 		shieldCooldown = convar.FloatValue;
 	else if (convar == cvar_buytime)
 		SetBuyTime();
+	else if (convar == cvar_custom_model_path)
+		convar.GetString(customModelsPath, sizeof(customModelsPath));
 }
 
 
@@ -717,7 +722,7 @@ public void OnCvarChange(ConVar convar, char[] oldValue, char[] newValue)
 public void ReadCustomModelsFile()
 {
 	char path[PLATFORM_MAX_PATH], line[PLATFORM_MAX_PATH];
-	BuildPath(Path_SM, path, sizeof(path), "%s", customModelsPath);
+	BuildPath(Path_SM, path, sizeof(path), "%s%s", customModelsPath, customModelsFile);
 	File file = OpenFile(path, "r");
 	if (!FileExists(path))
 	{
