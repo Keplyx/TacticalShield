@@ -24,6 +24,12 @@ This plugin is compatible with [Trouble in Terrorist Town](https://github.com/Ba
 Just install TTT and Tactical Shield normally for it to work.
 You will want to set the cvars *ts_price "30000"* to prevent players from buying shields outside of the traitor/detective menu.
 
+### MyJailShop
+This plugin is compatible with [MyJailShop](https://github.com/shanapu/MyJailShop) for csgo by [shanapu](https://github.com/shanapu).
+
+Just install MyJailShop and Tactical Shield normally for it to work.
+You will want to set the cvars *ts_price "30000"* to prevent players from buying shields outside of the shop.
+
 ### Cameras and Drones
 This plugin is compatible with [Cameras And Drones](https://keplyx.github.io/cameras-and-drones/).
 
