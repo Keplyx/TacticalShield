@@ -157,10 +157,7 @@ public void ResetPlayerVars(int client_index)
 	canDeployShield[client_index] = true;
 	playerShieldOverride[client_index] = 0;
 	canBuy[client_index] = true;
-	if (deployTimers[client_index] != INVALID_HANDLE)
-		CloseHandle(deployTimers[client_index]);
-	if (stateTimers[client_index] != INVALID_HANDLE)
-		CloseHandle(stateTimers[client_index]);
+	ResetPlayerTimers(client_index);
 }
 
 /**
@@ -181,10 +178,7 @@ public void InitVars()
 		shields[i] = -1;
 		playerShieldOverride[i] = 0;
 		canBuy[i] = true;
-		if (deployTimers[i] != INVALID_HANDLE)
-			CloseHandle(deployTimers[i]);
-		if (stateTimers[i] != INVALID_HANDLE)
-			CloseHandle(stateTimers[i]);
+		ResetPlayerTimers(i);
 	}
 }
 

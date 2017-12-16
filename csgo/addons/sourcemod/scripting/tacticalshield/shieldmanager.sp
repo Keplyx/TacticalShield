@@ -178,7 +178,8 @@ public void Hook_WeaponSwitch(int client_index, int weapon_index)
 public Action Timer_ShieldStateCooldown(Handle timer, any ref)
 {
 	int client_index = EntRefToEntIndex(ref);
-	canChangeState[client_index] = true;
+	if (client_index > 0 && client_index <= MAXPLAYERS)
+		canChangeState[client_index] = true;
 }
 
 /**
@@ -187,7 +188,17 @@ public Action Timer_ShieldStateCooldown(Handle timer, any ref)
 public Action Timer_ShieldDeployCooldown(Handle timer, any ref)
 {
 	int client_index = EntRefToEntIndex(ref);
-	canDeployShield[client_index] = true;
+	if (client_index > 0 && client_index <= MAXPLAYERS)
+		canDeployShield[client_index] = true;
 }
 
-
+public void ResetPlayerTimers(int client_index)
+{
+	if (deployTimers[client_index] != INVALID_HANDLE)
+		KillTimer(deployTimers[client_index]);
+	if (stateTimers[client_index] != INVALID_HANDLE)
+		KillTimer(stateTimers[client_index]);
+	
+	deployTimers[client_index] = INVALID_HANDLE;
+	stateTimers[client_index] = INVALID_HANDLE
+}
