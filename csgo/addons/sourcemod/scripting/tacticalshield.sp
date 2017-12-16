@@ -34,11 +34,11 @@
 
 /*  New in this version
 *
-*	Added custom models path cvar
+*
 *
 */
 
-#define VERSION "1.0.3"
+#define VERSION "1.0.4"
 #define PLUGIN_NAME "Tactical Shield"
 #define AUTHOR "Keplyx"
 
@@ -154,8 +154,13 @@ public void ResetPlayerVars(int client_index)
 	hasShield[client_index] = false;
 	isShieldFull[client_index] = true;
 	canChangeState[client_index] = true;
+	canDeployShield[client_index] = true;
 	playerShieldOverride[client_index] = 0;
 	canBuy[client_index] = true;
+	if (deployTimers[client_index] != INVALID_HANDLE)
+		CloseHandle(deployTimers[client_index]);
+	if (stateTimers[client_index] != INVALID_HANDLE)
+		CloseHandle(stateTimers[client_index]);
 }
 
 /**
@@ -172,9 +177,14 @@ public void InitVars()
 		hasShield[i] = false;
 		isShieldFull[i] = true;
 		canChangeState[i] = true;
+		canDeployShield[i] = true;
 		shields[i] = -1;
 		playerShieldOverride[i] = 0;
 		canBuy[i] = true;
+		if (deployTimers[i] != INVALID_HANDLE)
+			CloseHandle(deployTimers[i]);
+		if (stateTimers[i] != INVALID_HANDLE)
+			CloseHandle(stateTimers[i]);
 	}
 }
 
@@ -423,6 +433,12 @@ public void TryDeployShield(int client_index)
 		PrintHintText(client_index, "<font color='#ff0000'>You cannot use shields</font>");
 		return;
 	}
+	if (!canDeployShield[client_index])
+	{
+		PrintHintText(client_index, "You need to wait before redeploying your shield");
+		return;
+	}
+	
 	PrintHintText(client_index, "<font color='#dd3f18'>Commands:</font><br><font color='#00ff00'>ts_toggle</font>: remove your shield<br><font color='#00ff00'>+use</font>: toggle full/half shield mode");
 	CreateShield(client_index);
 }

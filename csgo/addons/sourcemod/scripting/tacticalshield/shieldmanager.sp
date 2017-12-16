@@ -28,6 +28,10 @@ int shields[MAXPLAYERS + 1];
 bool hasShield[MAXPLAYERS + 1];
 bool isShieldFull[MAXPLAYERS + 1];
 bool canChangeState[MAXPLAYERS + 1];
+bool canDeployShield[MAXPLAYERS + 1];
+
+Handle stateTimers[MAXPLAYERS + 1];
+Handle deployTimers[MAXPLAYERS + 1];
 
 bool useCustomModel = false;
 
@@ -89,6 +93,9 @@ public void DeleteShield(int client_index)
 		RemoveEdict(shields[client_index]);
 	}
 	shields[client_index] = -1;
+	canDeployShield[client_index] = false;
+	int ref = EntIndexToEntRef(client_index);
+	deployTimers[client_index] = CreateTimer(shieldCooldown, Timer_ShieldDeployCooldown, ref);
 }
 
 /**
@@ -103,7 +110,7 @@ public void ToggleShieldState(int client_index)
 		isShieldFull[client_index] = !isShieldFull[client_index];
 		canChangeState[client_index] = false;
 		int ref = EntIndexToEntRef(client_index);
-		CreateTimer(shieldCooldown, Timer_ShieldCooldown, ref);
+		stateTimers[client_index] = CreateTimer(shieldCooldown, Timer_ShieldStateCooldown, ref);
 		SetShieldPos(client_index);
 	}
 }
@@ -168,10 +175,19 @@ public void Hook_WeaponSwitch(int client_index, int weapon_index)
 /**
 * Timer to prevent players from changing shield state too quickly.
 */
-public Action Timer_ShieldCooldown(Handle timer, any ref)
+public Action Timer_ShieldStateCooldown(Handle timer, any ref)
 {
 	int client_index = EntRefToEntIndex(ref);
 	canChangeState[client_index] = true;
+}
+
+/**
+* Timer to prevent players from deploying/removing shield too quickly.
+*/
+public Action Timer_ShieldDeployCooldown(Handle timer, any ref)
+{
+	int client_index = EntRefToEntIndex(ref);
+	canDeployShield[client_index] = true;
 }
 
 
