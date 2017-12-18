@@ -35,11 +35,12 @@
 /*  New in this version
 *
 *	Added shield health
-*	Added sound
+*	Added sounds
 *	Improved various hint text
 *	Added deploy cooldown
 *	Can keep shield between rounds
 *	Shield stays in the back of the player when he is not using it
+*	Can drop/pickup shields
 */
 
 #define VERSION "1.1.0"
@@ -60,7 +61,7 @@ public Plugin myinfo =
 {
 	name = PLUGIN_NAME,
 	author = AUTHOR,
-	description = "Tactical shield to protect yourself.",
+	description = "CSGO plugin adding a tactical shield to the game.",
 	version = VERSION,
 	url = "https://keplyx.github.io/TacticalShield/index.html"
 }
