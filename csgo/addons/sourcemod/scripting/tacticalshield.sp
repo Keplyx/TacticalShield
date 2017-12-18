@@ -38,7 +38,7 @@
 *	Added sound
 *	Improved various hint text
 *	Added deploy cooldown
-*
+*	Can keep shield between rounds
 */
 
 #define VERSION "1.1.0"
@@ -81,7 +81,7 @@ public void OnPluginStart()
 	HookEvent("player_spawn", Event_PlayerSpawn);
 
 	CreateConVars(VERSION);
-	InitVars();
+	InitVars(false);
 	RegisterCommands();
 	ReadCustomModelsFile();
 	
@@ -174,7 +174,7 @@ public void ResetPlayerVars(int client_index)
 /**
 * Initialize variables to default values.
 */
-public void InitVars()
+public void InitVars(bool isNewRound)
 {
 	useCustomModel = cvar_usecustom_model.BoolValue;
 	shieldCooldown = cvar_cooldown.FloatValue;
@@ -183,7 +183,8 @@ public void InitVars()
 	SetBuyTime();
 	for (int i = 0; i < sizeof(hasShield); i++)
 	{
-		hasShield[i] = false;
+		if (isNewRound && !cvar_keep_between_rounds.BoolValue)
+			hasShield[i] = false;
 		isShieldFull[i] = true;
 		canChangeState[i] = true;
 		canDeployShield[i] = true;
@@ -226,7 +227,7 @@ public void SetBuyTime()
  */
 public void Event_RoundStart(Handle event, const char[] name, bool dontBroadcast)
 {
-	InitVars();
+	InitVars(true);
 	if (cvar_buytime_start.IntValue == 0)
 	{
 		SetBuyState(0, true);

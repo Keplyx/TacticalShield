@@ -25,6 +25,7 @@ ConVar cvar_shield_health = null;
 
 ConVar cvar_usecustom_model = null;
 
+ConVar cvar_keep_between_rounds = null;
 ConVar cvar_cooldown = null;
 
 ConVar cvar_buytime = null;
@@ -47,6 +48,8 @@ public void CreateConVars(char[] version)
 	cvar_shield_health = CreateConVar("ts_shield_health", "1000", "Set how much damage a shield can take before getting destroyed. -1 = not breakable.", FCVAR_NOTIFY, true, -1.0);
 	cvar_shield_health.AddChangeHook(OnCvarChange);
 	
+	cvar_keep_between_rounds = CreateConVar("ts_keep_between_rounds", "1", "Set whether to keep shields between rounds when staying alive with one.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
+
 	cvar_usecustom_model = CreateConVar("ts_custom_model", "0", "Set whether to use a model specified in sourcemod/gamedata/tacticalshield/custom_models.txt.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	cvar_usecustom_model.AddChangeHook(OnCvarChange);
 	
