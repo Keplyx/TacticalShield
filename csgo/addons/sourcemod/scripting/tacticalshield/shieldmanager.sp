@@ -118,9 +118,7 @@ public void DeleteShield(int client_index)
 		RemoveEdict(shields[client_index]);
 	}
 	shields[client_index] = -1;
-	canDeployShield[client_index] = false;
-	int ref = EntIndexToEntRef(client_index);
-	deployTimers[client_index] = CreateTimer(shieldCooldown, Timer_ShieldDeployCooldown, ref);
+	hasShield[client_index] = false;
 }
 
 /**
@@ -145,6 +143,9 @@ public void UnEquipShield(int client_index)
 	EmitSoundToClient(client_index, toggleShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 	shieldState[client_index] = SHIELD_BACK;
 	SetShieldPos(client_index);
+	canDeployShield[client_index] = false;
+	int ref = EntIndexToEntRef(client_index);
+	deployTimers[client_index] = CreateTimer(shieldCooldown, Timer_ShieldDeployCooldown, ref);
 }
 
 /**
@@ -156,7 +157,6 @@ public void DestroyShield(int client_index)
 {
 	EmitSoundToAll(destroyShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 	PrintHintText(client_index, "<font color='#FF000'>Your shield got destroyed!</font>");
-	hasShield[client_index] = false;
 	DeleteShield(client_index);
 }
 
@@ -318,4 +318,27 @@ public void ResetPlayerTimers(int client_index)
 	
 	deployTimers[client_index] = INVALID_HANDLE;
 	stateTimers[client_index] = INVALID_HANDLE
+}
+
+
+public void DropShield(int client_index)
+{
+	float pos[3], rot[3];
+	AcceptEntityInput(shields[client_index], "SetParent");
+	GetEntPropVector(shields[client_index], Prop_Send, "m_vecOrigin", pos);
+	GetEntPropVector(shields[client_index], Prop_Send, "m_angRotation", rot);
+	DeleteShield(client_index);
+	int shield = CreateEntityByName("prop_physics_override");
+	if (IsValidEntity(shield)) {
+		if (useCustomModel && !StrEqual(customShieldModel, "", false))
+			SetEntityModel(shield, customShieldModel);
+		else
+			SetEntityModel(shield, defaultShieldModel);
+		DispatchKeyValue(shield, "solid", "6");
+		SetEntProp(shield, Prop_Data, "m_CollisionGroup", 1);
+		DispatchSpawn(shield);
+		ActivateEntity(shield);
+		
+		TeleportEntity(shield, pos, rot, NULL_VECTOR);
+	}
 }

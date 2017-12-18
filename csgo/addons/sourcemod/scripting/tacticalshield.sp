@@ -80,7 +80,9 @@ public void OnPluginStart()
 	HookEvent("round_start", Event_RoundStart);
 	HookEvent("player_death", Event_PlayerDeath);
 	HookEvent("player_spawn", Event_PlayerSpawn);
-
+	
+	AddCommandListener(Command_Drop, "drop"); 
+	
 	CreateConVars(VERSION);
 	InitVars(false);
 	RegisterCommands();
@@ -238,13 +240,14 @@ public void Event_RoundStart(Handle event, const char[] name, bool dontBroadcast
 }
 
 /**
-* Reset everything related to the dying player.
+* Reset everything related to the dying player and drop his shield.
 */
 public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
 {
-	int victim = GetClientOfUserId(GetEventInt(event, "userid"));
-	DeleteShield(victim);
-	ResetPlayerVars(victim);
+	int client_index = GetClientOfUserId(GetEventInt(event, "userid"));
+	if (hasShield[client_index])
+		DropShield(client_index);
+	ResetPlayerVars(client_index);
 }
 
 /**
@@ -304,6 +307,20 @@ public int Native_RemovePlayerShield(Handle plugin, int numParams)
 /************************************************************************************************************
  *											COMMANDS
  ************************************************************************************************************/
+
+/**
+* Allow players to drop their shield.
+*/
+public Action Command_Drop(int client_index, char[] command, int args)
+{
+	if (IsHoldingShield(client_index))
+	{
+		PrintHintText(client_index, "Your dropped your shield");
+		DropShield(client_index);
+		return Plugin_Handled;
+	}
+	return Plugin_Continue;
+}  
 
  /**
  * Reload custom models file.
@@ -612,6 +629,7 @@ public Action OnPlayerRunCmd(int client_index, int &buttons, int &impulse, float
 	{
 		if (buttons & IN_USE)
 			ToggleShieldState(client_index);
+		
 		if (shieldState[client_index] == SHIELD_FULL)
 		{
 			// Limit speed when using shield (faster when not fully using it)
