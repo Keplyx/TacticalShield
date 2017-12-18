@@ -248,7 +248,7 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 {
 	int client_index = GetClientOfUserId(GetEventInt(event, "userid"));
 	if (hasShield[client_index])
-		DropShield(client_index);
+		DropShield(client_index, false);
 	ResetPlayerVars(client_index);
 }
 
@@ -318,7 +318,7 @@ public Action Command_Drop(int client_index, char[] command, int args)
 	if (IsHoldingShield(client_index))
 	{
 		PrintHintText(client_index, "Your dropped your shield");
-		DropShield(client_index);
+		DropShield(client_index, true);
 		return Plugin_Handled;
 	}
 	return Plugin_Continue;
@@ -684,20 +684,6 @@ public void LimitSpeed(int client_index, float maxSpeed)
 /************************************************************************************************************
  *											TESTS
  ************************************************************************************************************/
-
- /**
- * Test if the given player is holding a shield.
- *
- * @param client_index           Index of the client.
- * @return  true if the player is holding a shield, false otherwise.
- */
-public bool IsHoldingShield(int client_index)
-{
-	if (!IsValidClient(client_index))
-		return false
-	else
-		return shields[client_index] > 0 && shieldState[client_index] != SHIELD_BACK;
-}
 
 /**
 * Test if the given player is holding a pistol.

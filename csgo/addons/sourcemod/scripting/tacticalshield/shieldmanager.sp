@@ -254,7 +254,8 @@ public void SetShieldPos(int client_index)
 */
 public void Hook_WeaponSwitch(int client_index, int weapon_index)
 {
-	UnEquipShield(client_index);
+	if (IsHoldingShield(client_index))
+		UnEquipShield(client_index);
 }
 
 /**
@@ -332,9 +333,9 @@ public void ResetPlayerTimers(int client_index)
 *
 * @param client_index        Index of the client.
 */
-public void DropShield(int client_index)
+public void DropShield(int client_index, bool isThrowing)
 {
-	float pos[3], rot[3];
+	float pos[3], rot[3], vel[3];
 	AcceptEntityInput(shields[client_index], "SetParent");
 	GetEntPropVector(shields[client_index], Prop_Send, "m_vecOrigin", pos);
 	GetEntPropVector(shields[client_index], Prop_Send, "m_angRotation", rot);
@@ -350,7 +351,16 @@ public void DropShield(int client_index)
 		DispatchSpawn(shield);
 		ActivateEntity(shield);
 		
-		TeleportEntity(shield, pos, rot, NULL_VECTOR);
+		if (isThrowing)
+		{
+			float ang[3];
+			GetClientEyeAngles(client_index, ang);
+			GetAngleVectors(ang, vel, NULL_VECTOR, NULL_VECTOR);
+			ScaleVector(vel, 200.0);
+			vel[2] += 200;
+		}
+		
+		TeleportEntity(shield, pos, rot, vel);
 		droppedShields.Push(shield);
 	}
 }
@@ -393,4 +403,18 @@ public void PickupShield(int client_index, int shieldIndex)
 	RemoveEdict(shield);
 	droppedShields.Erase(shieldIndex);
 	CreateShield(client_index);
+}
+
+ /**
+ * Test if the given player is holding a shield.
+ *
+ * @param client_index           Index of the client.
+ * @return  true if the player is holding a shield, false otherwise.
+ */
+public bool IsHoldingShield(int client_index)
+{
+	if (!IsValidClient(client_index))
+		return false
+	else
+		return shields[client_index] > 0 && shieldState[client_index] != SHIELD_BACK;
 }
