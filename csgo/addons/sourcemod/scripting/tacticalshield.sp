@@ -34,11 +34,14 @@
 
 /*  New in this version
 *
-*
+*	Added shield health
+*	Added sound
+*	Improved various hint text
+*	Added deploy cooldown
 *
 */
 
-#define VERSION "1.0.4"
+#define VERSION "1.1.0"
 #define PLUGIN_NAME "Tactical Shield"
 #define AUTHOR "Keplyx"
 
@@ -86,8 +89,10 @@ public void OnPluginStart()
 	{
 		if (IsValidClient(i) && !IsFakeClient(i))
 			OnClientPostAdminCheck(i);
+		stateTimers[i] = INVALID_HANDLE;
+		deployTimers[i] = INVALID_HANDLE;
 	}
-
+	
 	if (lateload)
 		ServerCommand("mp_restartgame 1");
 }
@@ -122,6 +127,12 @@ public void OnMapStart()
 	PrecacheModel(defaultShieldModel, true);
 	if (!StrEqual(customShieldModel, "", false))
 		PrecacheModel(customShieldModel, true);
+		
+	PrecacheSound(getShieldSound, true);
+	PrecacheSound(toggleShieldSound, true);
+	PrecacheSound(destroyShieldSound, true);
+	PrecacheSound(changeStateShieldSound, true);
+	PrecacheSound(cantBuyShieldSound, true);
 }
 
 /**
@@ -167,6 +178,7 @@ public void InitVars()
 {
 	useCustomModel = cvar_usecustom_model.BoolValue;
 	shieldCooldown = cvar_cooldown.FloatValue;
+	shieldHealth = cvar_shield_health.FloatValue;
 	cvar_custom_model_path.GetString(customModelsPath, sizeof(customModelsPath));
 	SetBuyTime();
 	for (int i = 0; i < sizeof(hasShield); i++)
@@ -284,7 +296,7 @@ public int Native_RemovePlayerShield(Handle plugin, int numParams)
 		return;
 	}
 	if (IsHoldingShield(client_index))
-		DeleteShield(client_index);
+		DestroyShield(client_index);
 }
 
 /************************************************************************************************************
@@ -356,17 +368,20 @@ public void GetShield(int client_index, bool isFree)
 {
 	if (hasShield[client_index])
 	{
-		PrintHintText(client_index, "<font color='#ff0000' size='30'>You already have a shield</font>");
+		PrintHintText(client_index, "<font color='#ff0000'>You already have a shield</font>");
+		EmitSoundToClient(client_index, cantBuyShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 		return;
 	}
 	if (!CanUseShield(client_index))
 	{
 		PrintHintText(client_index, "<font color='#ff0000'>You cannot get shields</font>");
+		EmitSoundToClient(client_index, cantBuyShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 		return;
 	}
 	if (!canBuy[client_index])
 	{
 		PrintHintText(client_index, "<font color='#ff0000'>Buy time expired</font>");
+		EmitSoundToClient(client_index, cantBuyShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 		return;
 	}
 	if (!isFree)
@@ -374,12 +389,14 @@ public void GetShield(int client_index, bool isFree)
 		int money = GetEntProp(client_index, Prop_Send, "m_iAccount");
 		if (cvar_price.IntValue > money)
 		{
-			PrintHintText(client_index, "<font color='#ff0000' size='30'>Not enough money</font>");
+			PrintHintText(client_index, "<font color='#ff0000'>Not enough money</font>");
+			EmitSoundToClient(client_index, cantBuyShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 			return;
 		}
 		SetEntProp(client_index, Prop_Send, "m_iAccount", money - cvar_price.IntValue);
 	}
 	
+	EmitSoundToClient(client_index, getShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 	PrintHintText(client_index, "Use <font color='#00ff00'>ts_toggle</font> command to use your shield");
 	hasShield[client_index] = true;
 }
@@ -392,7 +409,7 @@ public Action ToggleShield(int client_index, int args)
 	if (!IsHoldingShield(client_index))
 		TryDeployShield(client_index);
 	else
-		DeleteShield(client_index);
+		UnEquipShield(client_index);
 	return Plugin_Handled;
 }
 
@@ -401,7 +418,7 @@ public Action ToggleShield(int client_index, int args)
 */
 public Action RemoveShield(int client_index, int args)
 {
-	DeleteShield(client_index);
+	UnEquipShield(client_index);
 	return Plugin_Handled;
 }
 
@@ -414,22 +431,26 @@ public void TryDeployShield(int client_index)
 {
 	if (!hasShield[client_index])
 	{
-		PrintHintText(client_index, "<font color='#ff0000' size='30'>You don't have a shield</font>");
+		PrintHintText(client_index, "<font color='#ff0000'>You don't have a shield</font>");
+		EmitSoundToClient(client_index, cantBuyShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 		return;
 	}
 	if (!IsHoldingPistol(client_index))
 	{
-		PrintHintText(client_index, "<font color='#ff0000' size='30'>You must hold your pistol to use the shield</font>");
+		PrintHintText(client_index, "<font color='#ff0000'>You must hold your pistol to use the shield</font>");
+		EmitSoundToClient(client_index, cantBuyShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 		return;
 	}
 	if (!CanUseShield(client_index) || (camerasAndDrones && IsPlayerInGear(client_index)))
 	{
 		PrintHintText(client_index, "<font color='#ff0000'>You cannot use shields</font>");
+		EmitSoundToClient(client_index, cantBuyShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 		return;
 	}
 	if (!canDeployShield[client_index])
 	{
-		PrintHintText(client_index, "You need to wait before redeploying your shield");
+		PrintHintText(client_index, "<font color='#ff0000'>You need to wait before redeploying your shield</font>");
+		EmitSoundToClient(client_index, cantBuyShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 		return;
 	}
 	
@@ -718,6 +739,8 @@ public void OnCvarChange(ConVar convar, char[] oldValue, char[] newValue)
 		SetBuyTime();
 	else if (convar == cvar_custom_model_path)
 		convar.GetString(customModelsPath, sizeof(customModelsPath));
+	else if (convar == cvar_shield_health)
+		shieldHealth = convar.FloatValue;
 }
 
 
@@ -838,9 +861,6 @@ public bool TryPrecacheModel(char[] model)
 	PrintToServer("Successfully precached custom model '%s'", model);
 	return true;
 }
-
-
-
 
 /**
 * When the a player is taking damage and someone is holding a shield, trace a ray between the damage position and the damage origin.
