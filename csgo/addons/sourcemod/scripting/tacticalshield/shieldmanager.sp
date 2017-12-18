@@ -31,8 +31,9 @@ char cantBuyShieldSound[] = "ui/weapon_cant_buy.wav";
 
 
 int shields[MAXPLAYERS + 1];
+int shieldState[MAXPLAYERS + 1];
+
 bool hasShield[MAXPLAYERS + 1];
-bool isShieldFull[MAXPLAYERS + 1];
 bool canChangeState[MAXPLAYERS + 1];
 bool canDeployShield[MAXPLAYERS + 1];
 
@@ -41,21 +42,34 @@ Handle deployTimers[MAXPLAYERS + 1];
 
 bool useCustomModel = false;
 
-float defaultPos[3] = {20.0, 0.0, -70.0};
-float defaultRot[3] = {0.0, 0.0, 0.0};
-float defaultMovedPos[3] = {0.0, 15.0, -70.0};
-float defaultMovedRot[3] = {0.0, 80.0, 0.0};
-float customPos[3];
-float customRot[3];
-float customMovedPos[3];
-float customMovedRot[3];
+float defaultFullPos[3] = {20.0, 0.0, -70.0};
+float defaultFullRot[3] = {0.0, 0.0, 0.0};
+float defaultHalfPos[3] = {0.0, 15.0, -70.0};
+float defaultHalfRot[3] = {0.0, 80.0, 0.0};
+float defaultBackPos[3] = {-25.0, 0.0, -70.0};
+float defaultBackRot[3] = {0.0, 0.0, 0.0};
+
+float customFullPos[3];
+float customFullRot[3];
+float customHalfPos[3];
+float customHalfRot[3];
+float customBackPos[3];
+float customBackRot[3];
+
 float shieldCooldown = 0.5;
 
 float damageTakenByShield[MAXPLAYERS + 1];
 float shieldHealth;
 
+enum (+=1)
+{
+	SHIELD_BACK = 0,
+	SHIELD_HALF,
+	SHIELD_FULL
+}
+
 /**
-* Creates a shield for the given player.
+* Creates a shield for the given player, in his back, ready for deployment.
 * This shield is a prop prop_dynamic_override with the custom shield model
 * (default if none was specified in the custom models file)
 * It does not collide with players and world.
@@ -80,39 +94,14 @@ public void CreateShield(int client_index)
 		SetEntityMoveType(shield, MOVETYPE_NONE);
 		SetVariantString("!activator"); AcceptEntityInput(shield, "SetParent", client_index, shield, 0);
 		SetVariantString("facemask"); AcceptEntityInput(shield, "SetParentAttachmentMaintainOffset");
-		isShieldFull[client_index] = true;
 		canChangeState[client_index] = true;
 		damageTakenByShield[client_index] = 0.0;
+		shieldState[client_index] = SHIELD_BACK;
 		SetShieldPos(client_index);
 		
-		EmitSoundToClient(client_index, toggleShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 		SDKHook(client_index, SDKHook_WeaponSwitch, Hook_WeaponSwitch);
 		SDKHook(shield, SDKHook_OnTakeDamage, Hook_TakeDamageShield);
 	}
-}
-
-/**
-* Unequips the shield for the given player, playing the sound.
-*
-* @param client_index        Index of the client.
-*/
-public void UnEquipShield(int client_index)
-{
-	EmitSoundToClient(client_index, toggleShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
-	DeleteShield(client_index);
-}
-
-/**
-* Destroys the shield for the given player, playing the destroy sound forcing him to buy an other one.
-*
-* @param client_index        Index of the client.
-*/
-public void DestroyShield(int client_index)
-{
-	EmitSoundToAll(destroyShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
-	PrintHintText(client_index, "<font color='#FF000'>Your shield got destroyed!</font>");
-	hasShield[client_index] = false;
-	DeleteShield(client_index);
 }
 
 /**
@@ -135,6 +124,43 @@ public void DeleteShield(int client_index)
 }
 
 /**
+* Equips the shield for the given player, playing the sound.
+*
+* @param client_index        Index of the client.
+*/
+public void EquipShield(int client_index)
+{
+	EmitSoundToClient(client_index, toggleShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
+	shieldState[client_index] = SHIELD_FULL;
+	SetShieldPos(client_index);
+}
+
+/**
+* Unequips the shield for the given player, playing the sound.
+*
+* @param client_index        Index of the client.
+*/
+public void UnEquipShield(int client_index)
+{
+	EmitSoundToClient(client_index, toggleShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
+	shieldState[client_index] = SHIELD_BACK;
+	SetShieldPos(client_index);
+}
+
+/**
+* Destroys the shield for the given player, playing the destroy sound forcing him to buy an other one.
+*
+* @param client_index        Index of the client.
+*/
+public void DestroyShield(int client_index)
+{
+	EmitSoundToAll(destroyShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
+	PrintHintText(client_index, "<font color='#FF000'>Your shield got destroyed!</font>");
+	hasShield[client_index] = false;
+	DeleteShield(client_index);
+}
+
+/**
 * Toggles the shield between full and half position for the given player.
 *
 * @param client_index        Index of the client.
@@ -143,7 +169,11 @@ public void ToggleShieldState(int client_index)
 {
 	if (canChangeState[client_index])
 	{
-		isShieldFull[client_index] = !isShieldFull[client_index];
+		if (shieldState[client_index] == SHIELD_FULL)
+			shieldState[client_index] = SHIELD_HALF;
+		else if (shieldState[client_index] == SHIELD_HALF)
+			shieldState[client_index] = SHIELD_FULL;
+		
 		canChangeState[client_index] = false;
 		int ref = EntIndexToEntRef(client_index);
 		stateTimers[client_index] = CreateTimer(shieldCooldown, Timer_ShieldStateCooldown, ref);
@@ -168,30 +198,46 @@ public void SetShieldPos(int client_index)
 	
 	for (int i = 0; i < 3; i++)
 	{
-		if (!isShieldFull[client_index])
+		switch(shieldState[client_index])
 		{
-			if (useCustomModel)
+			case SHIELD_FULL:
 			{
-				pos[i] = customMovedPos[i];
-				rot[i] = customMovedRot[i];
+				if (useCustomModel)
+				{
+					pos[i] = customFullPos[i];
+					rot[i] = customFullRot[i];
+				}
+				else
+				{
+					pos[i] = defaultFullPos[i];
+					rot[i] = defaultFullRot[i];
+				}
 			}
-			else
+			case SHIELD_HALF:
 			{
-				pos[i] = defaultMovedPos[i];
-				rot[i] = defaultMovedRot[i];
+				if (useCustomModel)
+				{
+					pos[i] = customHalfPos[i];
+					rot[i] = customHalfRot[i];
+				}
+				else
+				{
+					pos[i] = defaultHalfPos[i];
+					rot[i] = defaultHalfRot[i];
+				}
 			}
-		}
-		else
-		{
-			if (useCustomModel)
+			case SHIELD_BACK:
 			{
-				pos[i] = customPos[i];
-				rot[i] = customRot[i];
-			}
-			else
-			{
-				pos[i] = defaultPos[i];
-				rot[i] = defaultRot[i];
+				if (useCustomModel)
+				{
+					pos[i] = customBackPos[i];
+					rot[i] = customBackRot[i];
+				}
+				else
+				{
+					pos[i] = defaultBackPos[i];
+					rot[i] = defaultBackRot[i];
+				}
 			}
 		}
 	}

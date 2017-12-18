@@ -39,6 +39,7 @@
 *	Improved various hint text
 *	Added deploy cooldown
 *	Can keep shield between rounds
+*	Shield stays in the back of the player when he is not using it
 */
 
 #define VERSION "1.1.0"
@@ -163,7 +164,7 @@ public void OnClientDisconnect(int client_index)
 public void ResetPlayerVars(int client_index)
 {
 	hasShield[client_index] = false;
-	isShieldFull[client_index] = true;
+	shieldState[client_index] = SHIELD_BACK;
 	canChangeState[client_index] = true;
 	canDeployShield[client_index] = true;
 	playerShieldOverride[client_index] = 0;
@@ -185,7 +186,7 @@ public void InitVars(bool isNewRound)
 	{
 		if (isNewRound && !cvar_keep_between_rounds.BoolValue)
 			hasShield[i] = false;
-		isShieldFull[i] = true;
+		shieldState[i] = SHIELD_BACK;
 		canChangeState[i] = true;
 		canDeployShield[i] = true;
 		shields[i] = -1;
@@ -400,6 +401,7 @@ public void GetShield(int client_index, bool isFree)
 	EmitSoundToClient(client_index, getShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 	PrintHintText(client_index, "Use <font color='#00ff00'>ts_toggle</font> command to use your shield");
 	hasShield[client_index] = true;
+	CreateShield(client_index);
 }
 
 /**
@@ -456,7 +458,7 @@ public void TryDeployShield(int client_index)
 	}
 	
 	PrintHintText(client_index, "<font color='#dd3f18'>Commands:</font><br><font color='#00ff00'>ts_toggle</font>: remove your shield<br><font color='#00ff00'>+use</font>: toggle full/half shield mode");
-	CreateShield(client_index);
+	EquipShield(client_index);
 }
 
 
@@ -610,8 +612,7 @@ public Action OnPlayerRunCmd(int client_index, int &buttons, int &impulse, float
 	{
 		if (buttons & IN_USE)
 			ToggleShieldState(client_index);
-
-		if (!isShieldFull[client_index])
+		if (shieldState[client_index] == SHIELD_FULL)
 		{
 			// Limit speed when using shield (faster when not fully using it)
 			float runSpeed = cvar_speed.FloatValue + 100;
@@ -620,7 +621,7 @@ public Action OnPlayerRunCmd(int client_index, int &buttons, int &impulse, float
 
 			LimitSpeed(client_index, runSpeed);
 		}
-		else
+		else if (shieldState[client_index] == SHIELD_HALF)
 		{
 			float fUnlockTime = GetGameTime() + 0.1;
 			SetEntPropFloat(client_index, Prop_Send, "m_flNextAttack", fUnlockTime);
@@ -674,7 +675,7 @@ public bool IsHoldingShield(int client_index)
 	if (!IsValidClient(client_index))
 		return false
 	else
-		return shields[client_index] > 0;
+		return shields[client_index] > 0 && shieldState[client_index] != SHIELD_BACK;
 }
 
 /**
@@ -761,12 +762,12 @@ public void ReadCustomModelsFile()
 	if (!FileExists(path))
 	{
 		customShieldModel = "";
-		for (int i = 0; i < sizeof(customPos); i++)
+		for (int i = 0; i < sizeof(customFullPos); i++)
 		{
-			customPos[i] = defaultPos[i];
-			customRot[i] = defaultRot[i];
-			customMovedPos[i] = defaultMovedPos[i];
-			customMovedRot[i] = defaultMovedRot[i];
+			customFullPos[i] = defaultFullPos[i];
+			customFullRot[i] = defaultFullRot[i];
+			customHalfPos[i] = defaultHalfPos[i];
+			customHalfRot[i] = defaultHalfRot[i];
 		}
 		PrintToServer("Could not find custom models file. Falling back to default");
 		return;
@@ -833,16 +834,16 @@ public void SetCustomTransform(File file, bool isPos, bool isFull)
 		if (isFull)
 		{
 			if (isPos)
-				customPos[i] = StringToFloat(line);
+				customFullPos[i] = StringToFloat(line);
 			else
-				customRot[i] = StringToFloat(line);
+				customFullRot[i] = StringToFloat(line);
 		}
 		else
 		{
 			if (isPos)
-				customMovedPos[i] = StringToFloat(line);
+				customHalfPos[i] = StringToFloat(line);
 			else
-				customMovedRot[i] = StringToFloat(line);
+				customHalfRot[i] = StringToFloat(line);
 		}
 	}
 }
