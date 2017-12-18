@@ -31,6 +31,7 @@ char cantBuyShieldSound[] = "ui/weapon_cant_buy.wav";
 
 
 int shields[MAXPLAYERS + 1];
+ArrayList droppedShields;
 int shieldState[MAXPLAYERS + 1];
 
 bool hasShield[MAXPLAYERS + 1];
@@ -97,6 +98,7 @@ public void CreateShield(int client_index)
 		canChangeState[client_index] = true;
 		damageTakenByShield[client_index] = 0.0;
 		shieldState[client_index] = SHIELD_BACK;
+		hasShield[client_index] = true;
 		SetShieldPos(client_index);
 		
 		SDKHook(client_index, SDKHook_WeaponSwitch, Hook_WeaponSwitch);
@@ -309,6 +311,11 @@ public Action Hook_TakeDamageShield(int victim, int &attacker, int &inflictor, f
 	return Plugin_Continue;
 }
 
+/**
+* Reset timers related to the player.
+*
+* @param client_index        Index of the client.
+*/
 public void ResetPlayerTimers(int client_index)
 {
 	if (deployTimers[client_index] != INVALID_HANDLE)
@@ -320,7 +327,11 @@ public void ResetPlayerTimers(int client_index)
 	stateTimers[client_index] = INVALID_HANDLE
 }
 
-
+/**
+* Create a prop_physics at the position of the shield, and deletes the shield.
+*
+* @param client_index        Index of the client.
+*/
 public void DropShield(int client_index)
 {
 	float pos[3], rot[3];
@@ -340,5 +351,39 @@ public void DropShield(int client_index)
 		ActivateEntity(shield);
 		
 		TeleportEntity(shield, pos, rot, NULL_VECTOR);
+		droppedShields.Push(shield);
+	}
+}
+
+/**
+* Try to pick up a shield from the ground if the player doesn't have any.
+*
+* @param client_index        Index of the client.
+*/
+public void TryPickupShield(int client_index)
+{
+	int target = GetClientAimTarget(client_index, false);
+	if (droppedShields == INVALID_HANDLE || droppedShields.Length == 0)
+		return;
+	int shieldIndex = droppedShields.FindValue(target);
+	
+	if (shieldIndex != -1)
+	{
+		int shield = droppedShields.Get(shieldIndex);
+		float shieldPos[3], playerPos[3];
+		GetEntPropVector(shield, Prop_Send, "m_vecOrigin", shieldPos);
+		GetClientEyePosition(client_index, playerPos);
+		if (GetVectorDistance(shieldPos, playerPos) > 150.0)
+			return;
+		
+		if (hasShield[client_index])
+		{
+			PrintHintText(client_index, "You already have a shield");
+			return;
+		}
+		PrintHintText(client_index, "You picked up a shield");
+		RemoveEdict(shield);
+		droppedShields.Erase(shieldIndex);
+		CreateShield(client_index);
 	}
 }

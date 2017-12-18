@@ -196,6 +196,7 @@ public void InitVars(bool isNewRound)
 		canBuy[i] = true;
 		ResetPlayerTimers(i);
 	}
+	droppedShields = new ArrayList();
 }
 
 public void SetBuyState(int client_index, bool state)
@@ -417,7 +418,6 @@ public void GetShield(int client_index, bool isFree)
 	
 	EmitSoundToClient(client_index, getShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 	PrintHintText(client_index, "Use <font color='#00ff00'>ts_toggle</font> command to use your shield");
-	hasShield[client_index] = true;
 	CreateShield(client_index);
 }
 
@@ -623,8 +623,10 @@ public Action OnPlayerRunCmd(int client_index, int &buttons, int &impulse, float
 {
 	if (!IsPlayerAlive(client_index))
 		return Plugin_Continue;
-
-
+	
+	if (buttons & IN_USE)
+		TryPickupShield(client_index);
+	
 	if (IsHoldingShield(client_index))
 	{
 		if (buttons & IN_USE)
