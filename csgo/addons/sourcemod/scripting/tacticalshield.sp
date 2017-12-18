@@ -632,7 +632,7 @@ public Action OnPlayerRunCmd(int client_index, int &buttons, int &impulse, float
 		if (buttons & IN_USE)
 			ToggleShieldState(client_index);
 		
-		if (shieldState[client_index] == SHIELD_FULL)
+		if (shieldState[client_index] == SHIELD_HALF)
 		{
 			// Limit speed when using shield (faster when not fully using it)
 			float runSpeed = cvar_speed.FloatValue + 100;
@@ -641,7 +641,7 @@ public Action OnPlayerRunCmd(int client_index, int &buttons, int &impulse, float
 
 			LimitSpeed(client_index, runSpeed);
 		}
-		else if (shieldState[client_index] == SHIELD_HALF)
+		else if (shieldState[client_index] == SHIELD_FULL)
 		{
 			float fUnlockTime = GetGameTime() + 0.1;
 			SetEntPropFloat(client_index, Prop_Send, "m_flNextAttack", fUnlockTime);
@@ -788,6 +788,8 @@ public void ReadCustomModelsFile()
 			customFullRot[i] = defaultFullRot[i];
 			customHalfPos[i] = defaultHalfPos[i];
 			customHalfRot[i] = defaultHalfRot[i];
+			customBackPos[i] = defaultBackPos[i];
+			customBackRot[i] = defaultBackRot[i];
 		}
 		PrintToServer("Could not find custom models file. Falling back to default");
 		return;
@@ -799,14 +801,18 @@ public void ReadCustomModelsFile()
 
 		if (StrContains(line, "model=", false) == 0)
 			ReadModel(line)
-		else if (StrContains(line, "pos{", false) == 0)
-			SetCustomTransform(file, true, true);
-		else if (StrContains(line, "rot{", false) == 0)
-			SetCustomTransform(file, false, true);
-		else if (StrContains(line, "movedpos{", false) == 0)
-			SetCustomTransform(file, true, false);
-		else if (StrContains(line, "movedrot{", false) == 0)
-			SetCustomTransform(file, false, false);
+		else if (StrContains(line, "fullPos{", false) == 0)
+			SetCustomTransform(file, true, SHIELD_FULL);
+		else if (StrContains(line, "fullRot{", false) == 0)
+			SetCustomTransform(file, false, SHIELD_FULL);
+		else if (StrContains(line, "halfPos{", false) == 0)
+			SetCustomTransform(file, true, SHIELD_HALF);
+		else if (StrContains(line, "halfRot{", false) == 0)
+			SetCustomTransform(file, false, SHIELD_HALF);
+		else if (StrContains(line, "backPos{", false) == 0)
+			SetCustomTransform(file, true, SHIELD_BACK);
+		else if (StrContains(line, "backRot{", false) == 0)
+			SetCustomTransform(file, false, SHIELD_BACK);
 		if (file.EndOfFile())
 			break;
 	}
@@ -829,7 +835,7 @@ public void ReadModel(char line[PLATFORM_MAX_PATH])
 /**
 * Read the custom rotations and extracts their values to the corresponding variables.
 */
-public void SetCustomTransform(File file, bool isPos, bool isFull)
+public void SetCustomTransform(File file, bool isPos, int state)
 {
 	char line[512];
 	while (file.ReadLine(line, sizeof(line)))
@@ -851,19 +857,29 @@ public void SetCustomTransform(File file, bool isPos, bool isFull)
 			return;
 		ReplaceString(line, sizeof(line), "\n", "", false);
 
-		if (isFull)
+		switch(state)
 		{
-			if (isPos)
-				customFullPos[i] = StringToFloat(line);
-			else
-				customFullRot[i] = StringToFloat(line);
-		}
-		else
-		{
-			if (isPos)
-				customHalfPos[i] = StringToFloat(line);
-			else
-				customHalfRot[i] = StringToFloat(line);
+			case SHIELD_FULL:
+			{
+				if (isPos)
+					customFullPos[i] = StringToFloat(line);
+				else
+					customFullRot[i] = StringToFloat(line);
+			}
+			case SHIELD_HALF:
+			{
+				if (isPos)
+					customHalfPos[i] = StringToFloat(line);
+				else
+					customHalfRot[i] = StringToFloat(line);
+			}
+			case SHIELD_BACK:
+			{
+				if (isPos)
+					customBackPos[i] = StringToFloat(line);
+				else
+					customBackRot[i] = StringToFloat(line);
+			}
 		}
 	}
 }

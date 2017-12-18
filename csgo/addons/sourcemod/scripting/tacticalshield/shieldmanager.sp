@@ -381,9 +381,16 @@ public void TryPickupShield(int client_index)
 			PrintHintText(client_index, "You already have a shield");
 			return;
 		}
-		PrintHintText(client_index, "You picked up a shield");
-		RemoveEdict(shield);
-		droppedShields.Erase(shieldIndex);
-		CreateShield(client_index);
+		PickupShield(client_index, shieldIndex);
 	}
+}
+
+
+public void PickupShield(int client_index, int shieldIndex)
+{
+	PrintHintText(client_index, "You picked up a shield");
+	int shield = droppedShields.Get(shieldIndex);
+	RemoveEdict(shield);
+	droppedShields.Erase(shieldIndex);
+	CreateShield(client_index);
 }
