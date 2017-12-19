@@ -43,6 +43,8 @@ public void __pl_tacticalshield_SetNTVOptional()
 	MarkNativeAsOptional("DestroyPlayerShield");
 	MarkNativeAsOptional("EquipPlayerShield");
 	MarkNativeAsOptional("UnequipPlayerShield");
+	MarkNativeAsOptional("HidePlayerShield");
+	MarkNativeAsOptional("UnhidePlayerShield");
 }
 #endif
 
@@ -101,3 +103,24 @@ native void EquipPlayerShield(int client);
  * @error					Invalid client.
  */
 native void UnequipPlayerShield(int client);
+
+
+/**
+ * Hide the shield of the specified player. He will be able to use it again.
+ * This removes the shield entity without removing the shield from the player inventory.
+ * The player will then be able to use it again when unhidden.
+ *
+ * @param client			Client index.
+ * @return
+ * @error					Invalid client.
+ */
+native void HidePlayerShield(int client);
+
+/**
+ * Unhide the shield of the specified player.
+ *
+ * @param client			Client index.
+ * @return
+ * @error					Invalid client.
+ */
+native void UnhidePlayerShield(int client);

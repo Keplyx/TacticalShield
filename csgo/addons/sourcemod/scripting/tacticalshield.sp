@@ -41,6 +41,7 @@
 *	Can keep shield between rounds
 *	Shield stays in the back of the player when he is not using it
 *	Can drop/pickup shields
+*	Added/changed natives
 */
 
 #define VERSION "1.1.0"
@@ -75,6 +76,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("DestroyPlayerShield", Native_DestroyPlayerShield);
 	CreateNative("EquipPlayerShield", Native_EquipPlayerShield);
 	CreateNative("UnequipPlayerShield", Native_UnequipPlayerShield);
+	CreateNative("HidePlayerShield", Native_HidePlayerShield);
+	CreateNative("UnhidePlayerShield", Native_UnhidePlayerShield);
 	RegPluginLibrary("tacticalshield");
 	return APLRes_Success;
 }
@@ -157,7 +160,7 @@ public void OnClientPostAdminCheck(int client_index)
 */
 public void OnClientDisconnect(int client_index)
 {
-	DeleteShield(client_index);
+	DeleteShield(client_index, false);
 	ResetPlayerVars(client_index);
 	SDKUnhook(client_index, SDKHook_OnTakeDamage, Hook_TakeDamagePlayer);
 }
@@ -170,6 +173,7 @@ public void OnClientDisconnect(int client_index)
 public void ResetPlayerVars(int client_index)
 {
 	hasShield[client_index] = false;
+	isShieldHidden[client_index] = false;
 	shieldState[client_index] = SHIELD_BACK;
 	canChangeState[client_index] = true;
 	canDeployShield[client_index] = true;
@@ -205,6 +209,7 @@ public void InitVars(bool isNewRound)
 			playerShieldOverride[i] = 0;
 		}
 		shieldState[i] = SHIELD_BACK;
+		isShieldHidden[i] = false;
 		canChangeState[i] = true;
 		canDeployShield[i] = true;
 		canBuy[i] = true;
@@ -317,7 +322,7 @@ public int Native_RemovePlayerShield(Handle plugin, int numParams)
 		PrintToServer("Invalid client (%d)", client_index)
 		return;
 	}
-	DeleteShield(client_index);
+	DeleteShield(client_index, false);
 }
 
 public int Native_DestroyPlayerShield(Handle plugin, int numParams)
@@ -339,8 +344,7 @@ public int Native_EquipPlayerShield(Handle plugin, int numParams)
 		PrintToServer("Invalid client (%d)", client_index)
 		return;
 	}
-	if (!IsHoldingShield(client_index))
-		EquipShield(client_index);
+	EquipShield(client_index);
 }
 
 public int Native_UnequipPlayerShield(Handle plugin, int numParams)
@@ -351,10 +355,30 @@ public int Native_UnequipPlayerShield(Handle plugin, int numParams)
 		PrintToServer("Invalid client (%d)", client_index)
 		return;
 	}
-	if (IsHoldingShield(client_index))
-		UnequipShield(client_index);
+	UnequipShield(client_index);
 }
 
+public int Native_HidePlayerShield(Handle plugin, int numParams)
+{
+	int client_index = GetNativeCell(1);
+	if (!IsValidClient(client_index))
+	{
+		PrintToServer("Invalid client (%d)", client_index)
+		return;
+	}
+	HideShield(client_index);
+}
+
+public int Native_UnhidePlayerShield(Handle plugin, int numParams)
+{
+	int client_index = GetNativeCell(1);
+	if (!IsValidClient(client_index))
+	{
+		PrintToServer("Invalid client (%d)", client_index)
+		return;
+	}
+	UnhideShield(client_index);
+}
 
 
 /************************************************************************************************************

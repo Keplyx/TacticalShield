@@ -35,6 +35,7 @@ ArrayList droppedShields;
 int shieldState[MAXPLAYERS + 1];
 
 bool hasShield[MAXPLAYERS + 1];
+bool isShieldHidden[MAXPLAYERS + 1];
 bool canChangeState[MAXPLAYERS + 1];
 bool canDeployShield[MAXPLAYERS + 1];
 
@@ -109,18 +110,45 @@ public void CreateShield(int client_index)
 /**
 * Deletes the shield for the given player.
 *
-* @param client_index        Index of the client.
+* @param client_index		Index of the client.
+* @param isHiding			Whether is keeping the shield in the inventory or not.
 */
-public void DeleteShield(int client_index)
+public void DeleteShield(int client_index, bool isHiding)
 {
 	SDKUnhook(client_index, SDKHook_WeaponSwitch, Hook_WeaponSwitch);
 	SDKUnhook(shields[client_index], SDKHook_OnTakeDamage, Hook_TakeDamageShield);
-	if (IsValidEdict(shields[client_index]))
+	if (IsValidEdict(shields[client_index]) && !isShieldHidden[client_index])
 	{
 		RemoveEdict(shields[client_index]);
 	}
 	shields[client_index] = -1;
-	hasShield[client_index] = false;
+	hasShield[client_index] = isHiding;
+	isShieldHidden[client_index] = isHiding;
+}
+
+/**
+* Hide the shield for the given player, stopping him to use it while hidden.
+*
+* @param client_index        Index of the client.
+*/
+public void HideShield(int client_index)
+{
+	if (!hasShield[client_index])
+		return;
+	DeleteShield(client_index, true);
+}
+
+/**
+* Unhide the shield for the given player, allowing him to use it again.
+*
+* @param client_index        Index of the client.
+*/
+public void UnhideShield(int client_index)
+{
+	if (!hasShield[client_index])
+		return;
+	isShieldHidden[client_index] = false;
+	CreateShield(client_index);
 }
 
 /**
@@ -130,6 +158,8 @@ public void DeleteShield(int client_index)
 */
 public void EquipShield(int client_index)
 {
+	if (IsHoldingShield(client_index))
+		return;
 	EmitSoundToClient(client_index, toggleShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 	shieldState[client_index] = SHIELD_FULL;
 	SetShieldPos(client_index);
@@ -142,6 +172,8 @@ public void EquipShield(int client_index)
 */
 public void UnequipShield(int client_index)
 {
+	if (!IsHoldingShield(client_index))
+		return;
 	EmitSoundToClient(client_index, toggleShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 	shieldState[client_index] = SHIELD_BACK;
 	SetShieldPos(client_index);
@@ -157,9 +189,11 @@ public void UnequipShield(int client_index)
 */
 public void DestroyShield(int client_index)
 {
+	if (!hasShield[client_index])
+		return;
 	EmitSoundToAll(destroyShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 	PrintHintText(client_index, "<font color='#FF000'>Your shield got destroyed!</font>");
-	DeleteShield(client_index);
+	DeleteShield(client_index, false);
 }
 
 /**
@@ -343,7 +377,7 @@ public void DropShield(int client_index, bool isThrowing)
 	AcceptEntityInput(shields[client_index], "SetParent");
 	GetEntPropVector(shields[client_index], Prop_Send, "m_vecOrigin", pos);
 	GetEntPropVector(shields[client_index], Prop_Send, "m_angRotation", rot);
-	DeleteShield(client_index);
+	DeleteShield(client_index, false);
 	int shield = CreateEntityByName("prop_physics_override");
 	if (IsValidEntity(shield)) {
 		if (useCustomModel && !StrEqual(customShieldModel, "", false))
