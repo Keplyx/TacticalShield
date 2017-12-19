@@ -266,6 +266,8 @@ public Action Timer_ShieldStateCooldown(Handle timer, any ref)
 	int client_index = EntRefToEntIndex(ref);
 	if (client_index > 0 && client_index <= MAXPLAYERS)
 		canChangeState[client_index] = true;
+	stateTimers[client_index] = INVALID_HANDLE;
+	return Plugin_Handled;
 }
 
 /**
@@ -276,6 +278,8 @@ public Action Timer_ShieldDeployCooldown(Handle timer, any ref)
 	int client_index = EntRefToEntIndex(ref);
 	if (client_index > 0 && client_index <= MAXPLAYERS)
 		canDeployShield[client_index] = true;
+	deployTimers[client_index] = INVALID_HANDLE;
+	return Plugin_Handled;
 }
 
 /**
