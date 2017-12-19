@@ -40,18 +40,11 @@ public void __pl_tacticalshield_SetNTVOptional()
 	MarkNativeAsOptional("GivePlayerShield");
 	MarkNativeAsOptional("OverridePlayerShield");
 	MarkNativeAsOptional("RemovePlayerShield");
+	MarkNativeAsOptional("DestroyPlayerShield");
+	MarkNativeAsOptional("EquipPlayerShield");
+	MarkNativeAsOptional("UnequipPlayerShield");
 }
 #endif
-
-/**
- * Give the specified player a shield, if he can have one.
- * It is the same as the command ts_buy but without using money.
- *
- * @param client			Client index.
- * @return
- * @error					Invalid client.
- */
-native void GivePlayerShield(int client);
 
 /**
  * Override shield status for the specified player.
@@ -64,10 +57,47 @@ native void GivePlayerShield(int client);
 native void OverridePlayerShield(int client, int override);
 
 /**
- * Remove the shield for the specified player.
+ * Give the specified player a shield, if he can have one.
+ * It is the same as the command ts_buy but without using money.
+ *
+ * @param client			Client index.
+ * @return
+ * @error					Invalid client.
+ */
+native void GivePlayerShield(int client);
+
+/**
+ * Silently remove the shield for the specified player. He won't be able to use it anymore
  *
  * @param client			Client index.
  * @return
  * @error					Invalid client.
  */
 native void RemovePlayerShield(int client);
+
+/**
+ * Destroy the shield for the specified player. He won't be able to use it anymore.
+ *
+ * @param client			Client index.
+ * @return
+ * @error					Invalid client.
+ */
+native void DestroyPlayerShield(int client);
+
+/**
+ * Force the specified player to equip the shield.
+ *
+ * @param client			Client index.
+ * @return
+ * @error					Invalid client.
+ */
+native void EquipPlayerShield(int client);
+
+/**
+ * Force the specified player to unequip the shield. He will be able to use it again.
+ *
+ * @param client			Client index.
+ * @return
+ * @error					Invalid client.
+ */
+native void UnequipPlayerShield(int client);

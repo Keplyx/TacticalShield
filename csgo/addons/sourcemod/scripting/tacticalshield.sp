@@ -72,6 +72,9 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("GivePlayerShield", Native_GivePlayerShield);
 	CreateNative("OverridePlayerShield", Native_OverridePlayerShield);
 	CreateNative("RemovePlayerShield", Native_RemovePlayerShield);
+	CreateNative("DestroyPlayerShield", Native_DestroyPlayerShield);
+	CreateNative("EquipPlayerShield", Native_EquipPlayerShield);
+	CreateNative("UnequipPlayerShield", Native_UnequipPlayerShield);
 	RegPluginLibrary("tacticalshield");
 	return APLRes_Success;
 }
@@ -314,9 +317,45 @@ public int Native_RemovePlayerShield(Handle plugin, int numParams)
 		PrintToServer("Invalid client (%d)", client_index)
 		return;
 	}
-	if (IsHoldingShield(client_index))
-		DestroyShield(client_index);
+	DeleteShield(client_index);
 }
+
+public int Native_DestroyPlayerShield(Handle plugin, int numParams)
+{
+	int client_index = GetNativeCell(1);
+	if (!IsValidClient(client_index))
+	{
+		PrintToServer("Invalid client (%d)", client_index)
+		return;
+	}
+	DestroyShield(client_index);
+}
+
+public int Native_EquipPlayerShield(Handle plugin, int numParams)
+{
+	int client_index = GetNativeCell(1);
+	if (!IsValidClient(client_index))
+	{
+		PrintToServer("Invalid client (%d)", client_index)
+		return;
+	}
+	if (!IsHoldingShield(client_index))
+		EquipShield(client_index);
+}
+
+public int Native_UnequipPlayerShield(Handle plugin, int numParams)
+{
+	int client_index = GetNativeCell(1);
+	if (!IsValidClient(client_index))
+	{
+		PrintToServer("Invalid client (%d)", client_index)
+		return;
+	}
+	if (IsHoldingShield(client_index))
+		UnequipShield(client_index);
+}
+
+
 
 /************************************************************************************************************
  *											COMMANDS
@@ -442,7 +481,7 @@ public Action ToggleShield(int client_index, int args)
 	if (!IsHoldingShield(client_index))
 		TryDeployShield(client_index);
 	else
-		UnEquipShield(client_index);
+		UnequipShield(client_index);
 	return Plugin_Handled;
 }
 
@@ -451,7 +490,7 @@ public Action ToggleShield(int client_index, int args)
 */
 public Action RemoveShield(int client_index, int args)
 {
-	UnEquipShield(client_index);
+	UnequipShield(client_index);
 	return Plugin_Handled;
 }
 

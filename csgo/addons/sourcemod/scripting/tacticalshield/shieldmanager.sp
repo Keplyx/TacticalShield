@@ -140,7 +140,7 @@ public void EquipShield(int client_index)
 *
 * @param client_index        Index of the client.
 */
-public void UnEquipShield(int client_index)
+public void UnequipShield(int client_index)
 {
 	EmitSoundToClient(client_index, toggleShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 	shieldState[client_index] = SHIELD_BACK;
@@ -255,7 +255,7 @@ public void SetShieldPos(int client_index)
 public void Hook_WeaponSwitch(int client_index, int weapon_index)
 {
 	if (IsHoldingShield(client_index))
-		UnEquipShield(client_index);
+		UnequipShield(client_index);
 }
 
 /**
