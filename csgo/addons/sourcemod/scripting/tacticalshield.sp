@@ -187,13 +187,23 @@ public void InitVars(bool isNewRound)
 	SetBuyTime();
 	for (int i = 0; i < sizeof(hasShield); i++)
 	{
-		if (isNewRound && !cvar_keep_between_rounds.BoolValue)
+		if (isNewRound && cvar_keep_between_rounds.BoolValue)
+		{
+			if (!hasShield[i])
+			{
+				shields[i] = -1;
+				playerShieldOverride[i] = 0;
+			}
+		}
+		else
+		{
 			hasShield[i] = false;
+			shields[i] = -1;
+			playerShieldOverride[i] = 0;
+		}
 		shieldState[i] = SHIELD_BACK;
 		canChangeState[i] = true;
 		canDeployShield[i] = true;
-		shields[i] = -1;
-		playerShieldOverride[i] = 0;
 		canBuy[i] = true;
 		ResetPlayerTimers(i);
 	}
@@ -265,6 +275,8 @@ public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast
 		if (buyTime >= 0)
 			CreateTimer(buyTime, Timer_BuyTime, ref);
 	}
+	if (hasShield[client_index])
+		CreateShield(client_index);
 }
 
 /************************************************************************************************************
