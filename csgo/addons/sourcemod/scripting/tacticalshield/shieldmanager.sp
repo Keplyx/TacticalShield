@@ -435,7 +435,12 @@ public void TryPickupShield(int client_index)
 	}
 }
 
-
+/**
+* Create a shield for the specified player, removing the shield on the ground.
+*
+* @param client_index		Index of the client.
+* @param state				Index of the shield in the shields list.
+*/
 public void PickupShield(int client_index, int shieldIndex)
 {
 	PrintHintText(client_index, "You picked up a shield");
@@ -461,6 +466,9 @@ public bool IsHoldingShield(int client_index)
 
 /**
 * Hide shield only from player holding it.
+*
+* @param			Index of the hooked entity.
+* @param			Index of the client seeing the entity.
 */
 public Action Hook_SetTransmitShield(int entity_index, int client_index)
 {

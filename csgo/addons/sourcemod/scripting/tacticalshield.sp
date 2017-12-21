@@ -212,6 +212,12 @@ public void InitVars(bool isNewRound)
 	droppedShields = new ArrayList();
 }
 
+/**
+* Set whether a specific client or every clients can buy shields.
+*
+* @param client_index		Index of the client. -1 for every client.
+* @param state				Whether the client can buy.
+*/
 public void SetBuyState(int client_index, bool state)
 {
 	if (IsValidClient(client_index))
@@ -225,6 +231,9 @@ public void SetBuyState(int client_index, bool state)
 	}
 }
 
+/**
+* Set the buy time based on the cvar value.
+*/
 public void SetBuyTime()
 {
 	if (cvar_buytime.IntValue == -1)
