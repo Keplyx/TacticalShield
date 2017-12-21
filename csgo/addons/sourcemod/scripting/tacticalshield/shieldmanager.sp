@@ -104,6 +104,7 @@ public void CreateShield(int client_index)
 		
 		SDKHook(client_index, SDKHook_WeaponSwitch, Hook_WeaponSwitch);
 		SDKHook(shield, SDKHook_OnTakeDamage, Hook_TakeDamageShield);
+		SDKHook(shield, SDKHook_SetTransmit, Hook_SetTransmitShield);
 	}
 }
 
@@ -117,6 +118,7 @@ public void DeleteShield(int client_index, bool isHiding)
 {
 	SDKUnhook(client_index, SDKHook_WeaponSwitch, Hook_WeaponSwitch);
 	SDKUnhook(shields[client_index], SDKHook_OnTakeDamage, Hook_TakeDamageShield);
+	SDKUnhook(shields[client_index], SDKHook_SetTransmit, Hook_SetTransmitShield);
 	if (IsValidEdict(shields[client_index]) && !isShieldHidden[client_index])
 	{
 		RemoveEdict(shields[client_index]);
@@ -455,4 +457,15 @@ public bool IsHoldingShield(int client_index)
 		return false
 	else
 		return shields[client_index] > 0 && shieldState[client_index] != SHIELD_BACK;
+}
+
+/**
+* Hide shield only from player holding it.
+*/
+public Action Hook_SetTransmitShield(int entity_index, int client_index)
+{
+	if (client_index >0 && client_index <= MAXPLAYERS && shields[client_index] == entity_index && shieldState[client_index] == SHIELD_BACK)
+		return Plugin_Handled;
+	
+	return Plugin_Continue;
 }
