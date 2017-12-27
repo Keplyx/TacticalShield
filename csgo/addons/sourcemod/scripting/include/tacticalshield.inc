@@ -103,4 +103,4 @@ native void SetEquipPlayerShield(int client, bool equip);
  * @return
  * @error					Invalid client.
  */
-native void SetHidePlayerShield(int client);
+native void SetHidePlayerShield(int client, bool hide);
