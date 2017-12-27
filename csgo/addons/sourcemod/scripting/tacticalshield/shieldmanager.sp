@@ -129,32 +129,38 @@ public void DeleteShield(int client_index, bool isHiding)
 }
 
 /**
-* Hide the shield for the given player, stopping him to use it while hidden.
+* Hide/unhide the shield for the given player, stopping him to use it while hidden.
 *
-* @param client_index        Index of the client.
+* @param client_index			Index of the client.
+* @param hide					true to hide the shield, false otherwise.
 */
-public void HideShield(int client_index)
+public void SetHideShield(int client_index, bool hide)
 {
 	if (!hasShield[client_index])
 		return;
-	DeleteShield(client_index, true);
+	if (hide)
+		DeleteShield(client_index, true);
+	else
+		CreateShield(client_index);
+	isShieldHidden[client_index] = hide;
 }
 
 /**
-* Unhide the shield for the given player, allowing him to use it again.
+* Equip/Unequip the shield for the given player, playing the sound.
 *
-* @param client_index        Index of the client.
+* @param client_index		Index of the client.
+* @param equip				true to equip, false otherwise.
 */
-public void UnhideShield(int client_index)
+public void SetEquipShield(int client_index, bool equip)
 {
-	if (!hasShield[client_index])
-		return;
-	isShieldHidden[client_index] = false;
-	CreateShield(client_index);
+	if (equip)
+		EquipShield(client_index);
+	else
+		UnequipShield(client_index);
 }
 
 /**
-* Equips the shield for the given player, playing the sound.
+* Equip the shield for the given player, playing the sound.
 *
 * @param client_index        Index of the client.
 */
@@ -168,7 +174,7 @@ public void EquipShield(int client_index)
 }
 
 /**
-* Unequips the shield for the given player, playing the sound.
+* Unequip the shield for the given player, playing the sound.
 *
 * @param client_index        Index of the client.
 */
@@ -291,7 +297,7 @@ public void SetShieldPos(int client_index)
 public void Hook_WeaponSwitch(int client_index, int weapon_index)
 {
 	if (IsHoldingShield(client_index))
-		UnequipShield(client_index);
+		SetEquipShield(client_index, false);
 }
 
 /**

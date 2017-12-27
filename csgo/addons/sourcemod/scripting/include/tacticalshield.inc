@@ -41,10 +41,8 @@ public void __pl_tacticalshield_SetNTVOptional()
 	MarkNativeAsOptional("OverridePlayerShield");
 	MarkNativeAsOptional("RemovePlayerShield");
 	MarkNativeAsOptional("DestroyPlayerShield");
-	MarkNativeAsOptional("EquipPlayerShield");
-	MarkNativeAsOptional("UnequipPlayerShield");
-	MarkNativeAsOptional("HidePlayerShield");
-	MarkNativeAsOptional("UnhidePlayerShield");
+	MarkNativeAsOptional("SetEquipPlayerShield");
+	MarkNativeAsOptional("SetHidePlayerShield");
 }
 #endif
 
@@ -79,6 +77,7 @@ native void RemovePlayerShield(int client);
 
 /**
  * Destroy the shield for the specified player. He won't be able to use it anymore.
+ * Same as RemovePlayerShield but gives player feedback (sound and message).
  *
  * @param client			Client index.
  * @return
@@ -87,26 +86,16 @@ native void RemovePlayerShield(int client);
 native void DestroyPlayerShield(int client);
 
 /**
- * Force the specified player to equip the shield.
+ * Force the specified player to equip/unequip the shield.
  *
  * @param client			Client index.
  * @return
  * @error					Invalid client.
  */
-native void EquipPlayerShield(int client);
+native void SetEquipPlayerShield(int client, bool equip);
 
 /**
- * Force the specified player to unequip the shield. He will be able to use it again.
- *
- * @param client			Client index.
- * @return
- * @error					Invalid client.
- */
-native void UnequipPlayerShield(int client);
-
-
-/**
- * Hide the shield of the specified player. He will be able to use it again.
+ * Hide/unhide the shield of the specified player. He will be able to use it again.
  * This removes the shield entity without removing the shield from the player inventory.
  * The player will then be able to use it again when unhidden.
  *
@@ -114,13 +103,4 @@ native void UnequipPlayerShield(int client);
  * @return
  * @error					Invalid client.
  */
-native void HidePlayerShield(int client);
-
-/**
- * Unhide the shield of the specified player.
- *
- * @param client			Client index.
- * @return
- * @error					Invalid client.
- */
-native void UnhidePlayerShield(int client);
+native void SetHidePlayerShield(int client);

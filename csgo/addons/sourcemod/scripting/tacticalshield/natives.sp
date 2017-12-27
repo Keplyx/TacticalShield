@@ -22,10 +22,8 @@ public void RegisterNatives()
 	CreateNative("OverridePlayerShield", Native_OverridePlayerShield);
 	CreateNative("RemovePlayerShield", Native_RemovePlayerShield);
 	CreateNative("DestroyPlayerShield", Native_DestroyPlayerShield);
-	CreateNative("EquipPlayerShield", Native_EquipPlayerShield);
-	CreateNative("UnequipPlayerShield", Native_UnequipPlayerShield);
-	CreateNative("HidePlayerShield", Native_HidePlayerShield);
-	CreateNative("UnhidePlayerShield", Native_UnhidePlayerShield);
+	CreateNative("SetEquipPlayerShield", Native_SetEquipPlayerShield);
+	CreateNative("SetHidePlayerShield", Native_SetHidePlayerShield);
 }
 
 /************************************************************************************************************
@@ -77,7 +75,7 @@ public int Native_DestroyPlayerShield(Handle plugin, int numParams)
 	DestroyShield(client_index);
 }
 
-public int Native_EquipPlayerShield(Handle plugin, int numParams)
+public int Native_SetEquipPlayerShield(Handle plugin, int numParams)
 {
 	int client_index = GetNativeCell(1);
 	if (!IsValidClient(client_index))
@@ -85,10 +83,11 @@ public int Native_EquipPlayerShield(Handle plugin, int numParams)
 		PrintToServer("Invalid client (%d)", client_index)
 		return;
 	}
-	EquipShield(client_index);
+	bool equip = GetNativeCell(2);
+	SetEquipShield(client_index, equip);
 }
 
-public int Native_UnequipPlayerShield(Handle plugin, int numParams)
+public int Native_SetHidePlayerShield(Handle plugin, int numParams)
 {
 	int client_index = GetNativeCell(1);
 	if (!IsValidClient(client_index))
@@ -96,27 +95,6 @@ public int Native_UnequipPlayerShield(Handle plugin, int numParams)
 		PrintToServer("Invalid client (%d)", client_index)
 		return;
 	}
-	UnequipShield(client_index);
-}
-
-public int Native_HidePlayerShield(Handle plugin, int numParams)
-{
-	int client_index = GetNativeCell(1);
-	if (!IsValidClient(client_index))
-	{
-		PrintToServer("Invalid client (%d)", client_index)
-		return;
-	}
-	HideShield(client_index);
-}
-
-public int Native_UnhidePlayerShield(Handle plugin, int numParams)
-{
-	int client_index = GetNativeCell(1);
-	if (!IsValidClient(client_index))
-	{
-		PrintToServer("Invalid client (%d)", client_index)
-		return;
-	}
-	UnhideShield(client_index);
+	bool hide = GetNativeCell(2);
+	SetHideShield(client_index, hide);
 }

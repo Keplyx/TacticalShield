@@ -415,16 +415,7 @@ public Action ToggleShield(int client_index, int args)
 	if (!IsHoldingShield(client_index))
 		TryDeployShield(client_index);
 	else
-		UnequipShield(client_index);
-	return Plugin_Handled;
-}
-
-/**
-* Delete the shield for the player using the command.
-*/
-public Action RemoveShield(int client_index, int args)
-{
-	UnequipShield(client_index);
+		SetEquipShield(client_index, false);
 	return Plugin_Handled;
 }
 
@@ -461,7 +452,7 @@ public void TryDeployShield(int client_index)
 	}
 	
 	PrintHintText(client_index, "<font color='#dd3f18'>Commands:</font><br><font color='#00ff00'>ts_toggle</font>: remove your shield<br><font color='#00ff00'>+use</font>: toggle full/half shield mode");
-	EquipShield(client_index);
+	SetEquipShield(client_index, true);
 }
 
 
