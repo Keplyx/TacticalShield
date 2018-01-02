@@ -18,25 +18,38 @@
 
 model=models/custom_prop/ggc-plg-killzone/shield2/shield2.mdl
 // Shield pos/rot when fully covering player
-pos{
+fullPos{
 x=20.0
 y=0.0
 z=-35.0
 }
-rot{
+fullRot{
 x=0.0
 y=0.0
 z=0.0
 }
+
 // Shield pos/rot when moved aside to shoot (must at least clear the center of the screen)
-movedpos{
+halfPos{
 x=0.0
 y=15.0
 z=-50.0
 }
-movedrot{
+halfRot{
 x=0.0
 y=70.0
+z=0.0
+}
+
+// Shield pos/rot when hung at the player's back
+backPos{
+x=-15.0
+y=0.0
+z=-50.0
+}
+backRot{
+x=0.0
+y=170.0
 z=0.0
 }
 

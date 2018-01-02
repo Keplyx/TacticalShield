@@ -15,6 +15,7 @@ Fully compatible with [Cameras and drones](https://keplyx.github.io/cameras-and-
    * Shields block incoming damage (even awp shots)
    * Can only use shield when holding pistols
    * Can move aside shield to shoot
+   * Can drop your shield to give to other players
    * Can choose your own shield model
    * Can choose which team can use shields
 

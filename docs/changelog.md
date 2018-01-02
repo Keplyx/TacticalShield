@@ -6,6 +6,16 @@ topbar_link : true
 
 # Changelog
 
+* **Version 1.1.0**
+  * Added shield health (controlled by cvar)
+  * Added sounds
+  * Improved various hint text
+  * Added deploy cooldown (controlled by cvar)
+  * Can keep shield between rounds (controlled by cvar)
+  * Shield stays in the back of the player when he is not using it
+  * Can drop/pickup shields
+  * Added/changed natives for inter plugin compatibility
+
 * **Version 1.0.3**
   * Added custom models path cvar
 

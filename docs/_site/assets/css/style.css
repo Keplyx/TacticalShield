@@ -145,3 +145,5 @@ a { color: #63c0f5; text-shadow: 0 0 5px rgba(104, 182, 255, 0.5); }
 .topnav a.active { background-color: #b5e853; color: black; box-shadow: 1px 0px 3px #000; }
 
 .bug { background-color: #c11d00; }
+
+.warning-text { color: #de0000; font-weight: bold; }

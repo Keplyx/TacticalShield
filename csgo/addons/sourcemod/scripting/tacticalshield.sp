@@ -30,15 +30,22 @@
 #pragma newdecls required;
 
 #include "tacticalshield/init.sp"
+#include "tacticalshield/natives.sp"
 #include "tacticalshield/shieldmanager.sp"
 
 /*  New in this version
 *
-*	Added custom models path cvar
-*
+*	Added shield health
+*	Added sounds
+*	Improved various hint text
+*	Added deploy cooldown
+*	Can keep shield between rounds
+*	Shield stays in the back of the player when he is not using it
+*	Can drop/pickup shields
+*	Added/changed natives
 */
 
-#define VERSION "1.0.3"
+#define VERSION "1.1.0"
 #define PLUGIN_NAME "Tactical Shield"
 #define AUTHOR "Keplyx"
 
@@ -56,7 +63,7 @@ public Plugin myinfo =
 {
 	name = PLUGIN_NAME,
 	author = AUTHOR,
-	description = "Tactical shield to protect yourself.",
+	description = "CSGO plugin adding a tactical shield to the game.",
 	version = VERSION,
 	url = "https://keplyx.github.io/TacticalShield/index.html"
 }
@@ -64,9 +71,7 @@ public Plugin myinfo =
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
 	lateload = late;
-	CreateNative("GivePlayerShield", Native_GivePlayerShield);
-	CreateNative("OverridePlayerShield", Native_OverridePlayerShield);
-	CreateNative("RemovePlayerShield", Native_RemovePlayerShield);
+	RegisterNatives();
 	RegPluginLibrary("tacticalshield");
 	return APLRes_Success;
 }
@@ -76,9 +81,11 @@ public void OnPluginStart()
 	HookEvent("round_start", Event_RoundStart);
 	HookEvent("player_death", Event_PlayerDeath);
 	HookEvent("player_spawn", Event_PlayerSpawn);
-
+	
+	AddCommandListener(Command_Drop, "drop"); 
+	
 	CreateConVars(VERSION);
-	InitVars();
+	InitVars(false);
 	RegisterCommands();
 	ReadCustomModelsFile();
 	
@@ -86,8 +93,10 @@ public void OnPluginStart()
 	{
 		if (IsValidClient(i) && !IsFakeClient(i))
 			OnClientPostAdminCheck(i);
+		stateTimers[i] = INVALID_HANDLE;
+		deployTimers[i] = INVALID_HANDLE;
 	}
-
+	
 	if (lateload)
 		ServerCommand("mp_restartgame 1");
 }
@@ -122,6 +131,12 @@ public void OnMapStart()
 	PrecacheModel(defaultShieldModel, true);
 	if (!StrEqual(customShieldModel, "", false))
 		PrecacheModel(customShieldModel, true);
+		
+	PrecacheSound(getShieldSound, true);
+	PrecacheSound(toggleShieldSound, true);
+	PrecacheSound(destroyShieldSound, true);
+	PrecacheSound(changeStateShieldSound, true);
+	PrecacheSound(cantBuyShieldSound, true);
 }
 
 /**
@@ -139,7 +154,7 @@ public void OnClientPostAdminCheck(int client_index)
 */
 public void OnClientDisconnect(int client_index)
 {
-	DeleteShield(client_index);
+	DeleteShield(client_index, false);
 	ResetPlayerVars(client_index);
 	SDKUnhook(client_index, SDKHook_OnTakeDamage, Hook_TakeDamagePlayer);
 }
@@ -152,32 +167,57 @@ public void OnClientDisconnect(int client_index)
 public void ResetPlayerVars(int client_index)
 {
 	hasShield[client_index] = false;
-	isShieldFull[client_index] = true;
+	isShieldHidden[client_index] = false;
+	shieldState[client_index] = SHIELD_BACK;
 	canChangeState[client_index] = true;
+	canDeployShield[client_index] = true;
 	playerShieldOverride[client_index] = 0;
 	canBuy[client_index] = true;
+	ResetPlayerTimers(client_index);
 }
 
 /**
 * Initialize variables to default values.
 */
-public void InitVars()
+public void InitVars(bool isNewRound)
 {
 	useCustomModel = cvar_usecustom_model.BoolValue;
 	shieldCooldown = cvar_cooldown.FloatValue;
+	shieldHealth = cvar_shield_health.FloatValue;
 	cvar_custom_model_path.GetString(customModelsPath, sizeof(customModelsPath));
 	SetBuyTime();
 	for (int i = 0; i < sizeof(hasShield); i++)
 	{
-		hasShield[i] = false;
-		isShieldFull[i] = true;
+		if (isNewRound && cvar_keep_between_rounds.BoolValue)
+		{
+			if (!hasShield[i])
+			{
+				shields[i] = -1;
+				playerShieldOverride[i] = 0;
+			}
+		}
+		else
+		{
+			hasShield[i] = false;
+			shields[i] = -1;
+			playerShieldOverride[i] = 0;
+		}
+		shieldState[i] = SHIELD_BACK;
+		isShieldHidden[i] = false;
 		canChangeState[i] = true;
-		shields[i] = -1;
-		playerShieldOverride[i] = 0;
+		canDeployShield[i] = true;
 		canBuy[i] = true;
+		ResetPlayerTimers(i);
 	}
+	droppedShields = new ArrayList();
 }
 
+/**
+* Set whether a specific client or every clients can buy shields.
+*
+* @param client_index		Index of the client. -1 for every client.
+* @param state				Whether the client can buy.
+*/
 public void SetBuyState(int client_index, bool state)
 {
 	if (IsValidClient(client_index))
@@ -191,6 +231,9 @@ public void SetBuyState(int client_index, bool state)
 	}
 }
 
+/**
+* Set the buy time based on the cvar value.
+*/
 public void SetBuyTime()
 {
 	if (cvar_buytime.IntValue == -1)
@@ -210,7 +253,7 @@ public void SetBuyTime()
  */
 public void Event_RoundStart(Handle event, const char[] name, bool dontBroadcast)
 {
-	InitVars();
+	InitVars(true);
 	if (cvar_buytime_start.IntValue == 0)
 	{
 		SetBuyState(0, true);
@@ -220,13 +263,14 @@ public void Event_RoundStart(Handle event, const char[] name, bool dontBroadcast
 }
 
 /**
-* Reset everything related to the dying player.
+* Reset everything related to the dying player and drop his shield.
 */
 public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
 {
-	int victim = GetClientOfUserId(GetEventInt(event, "userid"));
-	DeleteShield(victim);
-	ResetPlayerVars(victim);
+	int client_index = GetClientOfUserId(GetEventInt(event, "userid"));
+	if (hasShield[client_index])
+		DropShield(client_index, false);
+	ResetPlayerVars(client_index);
 }
 
 /**
@@ -242,50 +286,27 @@ public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast
 		if (buyTime >= 0)
 			CreateTimer(buyTime, Timer_BuyTime, ref);
 	}
-}
-
-/************************************************************************************************************
- *											NATIVES
- ************************************************************************************************************/
-
-public int Native_GivePlayerShield(Handle plugin, int numParams)
-{
-	int client_index = GetNativeCell(1);
-	if (!IsValidClient(client_index))
-	{
-		PrintToServer("Invalid client (%d)", client_index)
-		return;
-	}
-	GetShield(client_index, true);
-}
-
-public int Native_OverridePlayerShield(Handle plugin, int numParams)
-{
-	int client_index = GetNativeCell(1);
-	if (!IsValidClient(client_index))
-	{
-		PrintToServer("Invalid client (%d)", client_index)
-		return;
-	}
-	int status = GetNativeCell(2);
-	OverrideShield(client_index, status);
-}
-
-public int Native_RemovePlayerShield(Handle plugin, int numParams)
-{
-	int client_index = GetNativeCell(1);
-	if (!IsValidClient(client_index))
-	{
-		PrintToServer("Invalid client (%d)", client_index)
-		return;
-	}
-	if (IsHoldingShield(client_index))
-		DeleteShield(client_index);
+	if (hasShield[client_index])
+		CreateShield(client_index);
 }
 
 /************************************************************************************************************
  *											COMMANDS
  ************************************************************************************************************/
+
+/**
+* Allow players to drop their shield.
+*/
+public Action Command_Drop(int client_index, char[] command, int args)
+{
+	if (IsHoldingShield(client_index))
+	{
+		PrintHintText(client_index, "Your dropped your shield");
+		DropShield(client_index, true);
+		return Plugin_Handled;
+	}
+	return Plugin_Continue;
+}  
 
  /**
  * Reload custom models file.
@@ -319,6 +340,7 @@ public Action ShowHelp(int client_index, int args)
 	PrintToConsole(client_index, "");
 	PrintToConsole(client_index, "Press +use when holding the shield to switch between 'full' mode and 'half' mode");
 	PrintToConsole(client_index, "Shield is automatically removed when switching weapons");
+	PrintToConsole(client_index, "Use +drop while holding the shield to drop it");
 	PrintToConsole(client_index, "");
 	PrintToConsole(client_index, "For a better experience, you should bind ts_buy and ts_toggle to a key:");
 	PrintToConsole(client_index, "bind 'KEY' 'COMMAND' | This will bind 'COMMAND to 'KEY'");
@@ -352,17 +374,20 @@ public void GetShield(int client_index, bool isFree)
 {
 	if (hasShield[client_index])
 	{
-		PrintHintText(client_index, "<font color='#ff0000' size='30'>You already have a shield</font>");
+		PrintHintText(client_index, "<font color='#ff0000'>You already have a shield</font>");
+		EmitSoundToClient(client_index, cantBuyShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 		return;
 	}
 	if (!CanUseShield(client_index))
 	{
 		PrintHintText(client_index, "<font color='#ff0000'>You cannot get shields</font>");
+		EmitSoundToClient(client_index, cantBuyShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 		return;
 	}
 	if (!canBuy[client_index])
 	{
 		PrintHintText(client_index, "<font color='#ff0000'>Buy time expired</font>");
+		EmitSoundToClient(client_index, cantBuyShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 		return;
 	}
 	if (!isFree)
@@ -370,14 +395,16 @@ public void GetShield(int client_index, bool isFree)
 		int money = GetEntProp(client_index, Prop_Send, "m_iAccount");
 		if (cvar_price.IntValue > money)
 		{
-			PrintHintText(client_index, "<font color='#ff0000' size='30'>Not enough money</font>");
+			PrintHintText(client_index, "<font color='#ff0000'>Not enough money</font>");
+			EmitSoundToClient(client_index, cantBuyShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 			return;
 		}
 		SetEntProp(client_index, Prop_Send, "m_iAccount", money - cvar_price.IntValue);
 	}
 	
+	EmitSoundToClient(client_index, getShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 	PrintHintText(client_index, "Use <font color='#00ff00'>ts_toggle</font> command to use your shield");
-	hasShield[client_index] = true;
+	CreateShield(client_index);
 }
 
 /**
@@ -388,16 +415,7 @@ public Action ToggleShield(int client_index, int args)
 	if (!IsHoldingShield(client_index))
 		TryDeployShield(client_index);
 	else
-		DeleteShield(client_index);
-	return Plugin_Handled;
-}
-
-/**
-* Delete the shield for the player using the command.
-*/
-public Action RemoveShield(int client_index, int args)
-{
-	DeleteShield(client_index);
+		SetEquipShield(client_index, false);
 	return Plugin_Handled;
 }
 
@@ -410,21 +428,31 @@ public void TryDeployShield(int client_index)
 {
 	if (!hasShield[client_index])
 	{
-		PrintHintText(client_index, "<font color='#ff0000' size='30'>You don't have a shield</font>");
+		PrintHintText(client_index, "<font color='#ff0000'>You don't have a shield</font>");
+		EmitSoundToClient(client_index, cantBuyShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 		return;
 	}
 	if (!IsHoldingPistol(client_index))
 	{
-		PrintHintText(client_index, "<font color='#ff0000' size='30'>You must hold your pistol to use the shield</font>");
+		PrintHintText(client_index, "<font color='#ff0000'>You must hold your pistol to use the shield</font>");
+		EmitSoundToClient(client_index, cantBuyShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 		return;
 	}
 	if (!CanUseShield(client_index) || (camerasAndDrones && IsPlayerInGear(client_index)))
 	{
 		PrintHintText(client_index, "<font color='#ff0000'>You cannot use shields</font>");
+		EmitSoundToClient(client_index, cantBuyShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 		return;
 	}
+	if (!canDeployShield[client_index])
+	{
+		PrintHintText(client_index, "<font color='#ff0000'>You need to wait before redeploying your shield</font>");
+		EmitSoundToClient(client_index, cantBuyShieldSound, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
+		return;
+	}
+	
 	PrintHintText(client_index, "<font color='#dd3f18'>Commands:</font><br><font color='#00ff00'>ts_toggle</font>: remove your shield<br><font color='#00ff00'>+use</font>: toggle full/half shield mode");
-	CreateShield(client_index);
+	SetEquipShield(client_index, true);
 }
 
 
@@ -572,14 +600,16 @@ public Action OnPlayerRunCmd(int client_index, int &buttons, int &impulse, float
 {
 	if (!IsPlayerAlive(client_index))
 		return Plugin_Continue;
-
-
+	
+	if (buttons & IN_USE)
+		TryPickupShield(client_index);
+	
 	if (IsHoldingShield(client_index))
 	{
 		if (buttons & IN_USE)
 			ToggleShieldState(client_index);
-
-		if (!isShieldFull[client_index])
+		
+		if (shieldState[client_index] == SHIELD_HALF)
 		{
 			// Limit speed when using shield (faster when not fully using it)
 			float runSpeed = cvar_speed.FloatValue + 100;
@@ -588,7 +618,7 @@ public Action OnPlayerRunCmd(int client_index, int &buttons, int &impulse, float
 
 			LimitSpeed(client_index, runSpeed);
 		}
-		else
+		else if (shieldState[client_index] == SHIELD_FULL)
 		{
 			float fUnlockTime = GetGameTime() + 0.1;
 			SetEntPropFloat(client_index, Prop_Send, "m_flNextAttack", fUnlockTime);
@@ -630,20 +660,6 @@ public void LimitSpeed(int client_index, float maxSpeed)
 /************************************************************************************************************
  *											TESTS
  ************************************************************************************************************/
-
- /**
- * Test if the given player is holding a shield.
- *
- * @param client_index           Index of the client.
- * @return  true if the player is holding a shield, false otherwise.
- */
-public bool IsHoldingShield(int client_index)
-{
-	if (!IsValidClient(client_index))
-		return false
-	else
-		return shields[client_index] > 0;
-}
 
 /**
 * Test if the given player is holding a pistol.
@@ -708,6 +724,8 @@ public void OnCvarChange(ConVar convar, char[] oldValue, char[] newValue)
 		SetBuyTime();
 	else if (convar == cvar_custom_model_path)
 		convar.GetString(customModelsPath, sizeof(customModelsPath));
+	else if (convar == cvar_shield_health)
+		shieldHealth = convar.FloatValue;
 }
 
 
@@ -727,12 +745,14 @@ public void ReadCustomModelsFile()
 	if (!FileExists(path))
 	{
 		customShieldModel = "";
-		for (int i = 0; i < sizeof(customPos); i++)
+		for (int i = 0; i < sizeof(customFullPos); i++)
 		{
-			customPos[i] = defaultPos[i];
-			customRot[i] = defaultRot[i];
-			customMovedPos[i] = defaultMovedPos[i];
-			customMovedRot[i] = defaultMovedRot[i];
+			customFullPos[i] = defaultFullPos[i];
+			customFullRot[i] = defaultFullRot[i];
+			customHalfPos[i] = defaultHalfPos[i];
+			customHalfRot[i] = defaultHalfRot[i];
+			customBackPos[i] = defaultBackPos[i];
+			customBackRot[i] = defaultBackRot[i];
 		}
 		PrintToServer("Could not find custom models file. Falling back to default");
 		return;
@@ -744,14 +764,18 @@ public void ReadCustomModelsFile()
 
 		if (StrContains(line, "model=", false) == 0)
 			ReadModel(line)
-		else if (StrContains(line, "pos{", false) == 0)
-			SetCustomTransform(file, true, true);
-		else if (StrContains(line, "rot{", false) == 0)
-			SetCustomTransform(file, false, true);
-		else if (StrContains(line, "movedpos{", false) == 0)
-			SetCustomTransform(file, true, false);
-		else if (StrContains(line, "movedrot{", false) == 0)
-			SetCustomTransform(file, false, false);
+		else if (StrContains(line, "fullPos{", false) == 0)
+			SetCustomTransform(file, true, SHIELD_FULL);
+		else if (StrContains(line, "fullRot{", false) == 0)
+			SetCustomTransform(file, false, SHIELD_FULL);
+		else if (StrContains(line, "halfPos{", false) == 0)
+			SetCustomTransform(file, true, SHIELD_HALF);
+		else if (StrContains(line, "halfRot{", false) == 0)
+			SetCustomTransform(file, false, SHIELD_HALF);
+		else if (StrContains(line, "backPos{", false) == 0)
+			SetCustomTransform(file, true, SHIELD_BACK);
+		else if (StrContains(line, "backRot{", false) == 0)
+			SetCustomTransform(file, false, SHIELD_BACK);
 		if (file.EndOfFile())
 			break;
 	}
@@ -774,7 +798,7 @@ public void ReadModel(char line[PLATFORM_MAX_PATH])
 /**
 * Read the custom rotations and extracts their values to the corresponding variables.
 */
-public void SetCustomTransform(File file, bool isPos, bool isFull)
+public void SetCustomTransform(File file, bool isPos, int state)
 {
 	char line[512];
 	while (file.ReadLine(line, sizeof(line)))
@@ -796,19 +820,29 @@ public void SetCustomTransform(File file, bool isPos, bool isFull)
 			return;
 		ReplaceString(line, sizeof(line), "\n", "", false);
 
-		if (isFull)
+		switch(state)
 		{
-			if (isPos)
-				customPos[i] = StringToFloat(line);
-			else
-				customRot[i] = StringToFloat(line);
-		}
-		else
-		{
-			if (isPos)
-				customMovedPos[i] = StringToFloat(line);
-			else
-				customMovedRot[i] = StringToFloat(line);
+			case SHIELD_FULL:
+			{
+				if (isPos)
+					customFullPos[i] = StringToFloat(line);
+				else
+					customFullRot[i] = StringToFloat(line);
+			}
+			case SHIELD_HALF:
+			{
+				if (isPos)
+					customHalfPos[i] = StringToFloat(line);
+				else
+					customHalfRot[i] = StringToFloat(line);
+			}
+			case SHIELD_BACK:
+			{
+				if (isPos)
+					customBackPos[i] = StringToFloat(line);
+				else
+					customBackRot[i] = StringToFloat(line);
+			}
 		}
 	}
 }
@@ -828,9 +862,6 @@ public bool TryPrecacheModel(char[] model)
 	PrintToServer("Successfully precached custom model '%s'", model);
 	return true;
 }
-
-
-
 
 /**
 * When the a player is taking damage and someone is holding a shield, trace a ray between the damage position and the damage origin.

@@ -21,9 +21,11 @@ ConVar cvar_welcome_message = null;
 ConVar cvar_price = null;
 ConVar cvar_speed = null;
 ConVar cvar_shield_team = null;
+ConVar cvar_shield_health = null;
 
 ConVar cvar_usecustom_model = null;
 
+ConVar cvar_keep_between_rounds = null;
 ConVar cvar_cooldown = null;
 
 ConVar cvar_buytime = null;
@@ -43,10 +45,15 @@ public void CreateConVars(char[] version)
 	cvar_price = CreateConVar("ts_price", "800", "Shield price.", FCVAR_NOTIFY, true, 0.0, true, 50000.0);
 	cvar_speed = CreateConVar("ts_speed", "100", "Player speed when using shield. 130 = walk with knife, 250 = run with knife", FCVAR_NOTIFY, true, 0.0, true, 250.0);
 	cvar_shield_team = CreateConVar("ts_shield_team", "0", "Set which team can use shields. This can be overridden per players with the command 'ts_override'. 0 = Everyone, 1 = Nobody, 2 = T only, 3 = CT only", FCVAR_NOTIFY, true, 0.0, true, 3.0);
+	cvar_shield_health = CreateConVar("ts_shield_health", "1000", "Set how much damage a shield can take before getting destroyed. -1 = not breakable.", FCVAR_NOTIFY, true, -1.0);
+	cvar_shield_health.AddChangeHook(OnCvarChange);
+	
+	cvar_keep_between_rounds = CreateConVar("ts_keep_between_rounds", "1", "Set whether to keep shields between rounds when staying alive with one. This will also keep override state.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
+
 	cvar_usecustom_model = CreateConVar("ts_custom_model", "0", "Set whether to use a model specified in sourcemod/gamedata/tacticalshield/custom_models.txt.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	cvar_usecustom_model.AddChangeHook(OnCvarChange);
 	
-	cvar_cooldown = CreateConVar("ts_cooldown", "1", "Set the time after which player can change the shield state (full/half).", FCVAR_NOTIFY, true, 0.0, true, 1000.0);
+	cvar_cooldown = CreateConVar("ts_cooldown", "1", "Set the time after which player can change the shield state, re-deploy the shield (full/half).", FCVAR_NOTIFY, true, 0.0, true, 1000.0);
 	cvar_cooldown.AddChangeHook(OnCvarChange);
 	
 	cvar_buytime = CreateConVar("ts_buytime", "-2", "Set how much time (in seconds) players have to buy a shield. -2 to use 'mp_buytime' value, -1 = forever", FCVAR_NOTIFY, true, -2.0, true, 3600.0);
