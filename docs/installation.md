@@ -18,15 +18,14 @@ To force players to download models, use the plugin [SM File/Folder Downloader a
 
 # Compatibility
  * ### TTT
-~~This plugin is compatible with [Trouble in Terrorist Town](https://github.com/Bara/TroubleinTerroristTown) for csgo by [Bara](https://github.com/Bara).~~
-~~Just install TTT and Tactical Shield normally for it to work.
-You will want to set the cvars *ts_price "30000"* to prevent players from buying shields outside of the traitor/detective menu.~~
-<span class='warning-text'>Tactical Shield's version 1.1.0 is not yet fully compatible with latest TTT. If you are using TTT and want a stable game, please do not update Tactical Shield yet.</span>
+This plugin is compatible with [Trouble in Terrorist Town](https://github.com/Bara/TroubleinTerroristTown) for csgo by [Bara](https://github.com/Bara).
+Just install TTT and Tactical Shield normally for it to work.
+You will want to set the cvars *ts_price "30000"* to prevent players from buying shields outside of the traitor/detective menu, and *ts_buytime "-1"* to allow player to buy one at anytime during the game. Also set *ts_keep_between_rounds "0"* to prevent players from keeping the shield between rounds.
 
  * ### MyJailShop
 This plugin is compatible with [MyJailShop](https://github.com/shanapu/MyJailShop) for csgo by [shanapu](https://github.com/shanapu).
 Just install MyJailShop and Tactical Shield normally for it to work.
-You will want to set the cvars *ts_price "30000"*, *ts_buytime "0"* to prevent players from buying shields outside of the shop. Also set *ts_keep_between_rounds "0"* to prevent players from keeping the shield between rounds.
+You will want to set the cvars *ts_price "30000"* to prevent players from buying shields outside of the shop, and *ts_buytime "-1"* to allow player to buy one at anytime during the game. Also set *ts_keep_between_rounds "0"* to prevent players from keeping the shield between rounds.
 
  * ### Cameras and Drones
 Compatible with [Cameras And Drones](https://keplyx.github.io/cameras-and-drones/).
