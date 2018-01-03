@@ -24,10 +24,9 @@ You will want to set the cvars *ts_price "30000"* to prevent players from buying
 <span class='warning-text'>Tactical Shield's version 1.1.0 is not yet fully compatible with latest TTT. If you are using TTT and want a stable game, please do not update Tactical Shield yet.</span>
 
  * ### MyJailShop
-~~This plugin is compatible with [MyJailShop](https://github.com/shanapu/MyJailShop) for csgo by [shanapu](https://github.com/shanapu).~~
-~~Just install MyJailShop and Tactical Shield normally for it to work.
-You will want to set the cvars *ts_price "30000"* to prevent players from buying shields outside of the shop.~~
-<span class='warning-text'>Tactical Shield's version 1.1.0 is not yet compatible with latest MyJailShop. If you are using MyJailShop and want a stable game, please do not update Tactical Shield yet.</span>
+This plugin is compatible with [MyJailShop](https://github.com/shanapu/MyJailShop) for csgo by [shanapu](https://github.com/shanapu).
+Just install MyJailShop and Tactical Shield normally for it to work.
+You will want to set the cvars *ts_price "30000"*, *ts_buytime "0"* to prevent players from buying shields outside of the shop. Also set *ts_keep_between_rounds "0"* to prevent players from keeping the shield between rounds.
 
  * ### Cameras and Drones
 Compatible with [Cameras And Drones](https://keplyx.github.io/cameras-and-drones/).
