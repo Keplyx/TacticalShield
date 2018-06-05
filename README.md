@@ -1,4 +1,12 @@
 # [CSGO] Tactical Shield
+
+
+# REPOSITORY UNMAINTAINED
+
+# Please go [here](https://gitlab.com/Keplyx/TacticalShield) for the up to date repository
+
+
+
 This plugin adds a tactical shield to the game. It is designed to improve the tactical side of the game.
 
 You can use this plugin along with my other plugin [Cameras and Drones](https://github.com/Keplyx/cameras-and-drones).
