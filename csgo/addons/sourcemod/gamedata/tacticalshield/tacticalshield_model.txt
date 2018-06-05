@@ -1,0 +1,40 @@
+"model"
+{
+    "path"     "models/custom_prop/ggc-plg-killzone/shield2/shield2.mdl"
+    "full_pos"
+    {
+        "x"     "20.0"
+        "y"     "0.0"
+        "z"     "35.0"
+    }
+    "full_rot"
+    {
+        "x"     "0.0"
+        "y"     "0.0"
+        "z"     "0.0"
+    }
+    "half_pos"
+    {
+        "x"     15.0"
+        "y"     "0.0"
+        "z"     "-50.0"
+    }
+    "half_rot"
+    {
+        "x"     "0.0"
+        "y"     "70.0"
+        "z"     "0.0"
+    }
+    "back_pos"
+    {
+        "x"     "-15.0"
+        "y"     "0.0"
+        "z"     "-50.0"
+    }
+    "back_rot"
+    {
+        "x"     "0.0"
+        "y"     "170.0"
+        "z"     "0.0"
+    }
+}

@@ -83,6 +83,7 @@ public void CreateShield(int client_index)
 	int shield = CreateEntityByName("prop_dynamic_override");
 	if (IsValidEntity(shield)) {
 		shields[client_index] = shield;
+		PrintToServer("custom model : %s", customShieldModel);
 		if (useCustomModel && !StrEqual(customShieldModel, "", false))
 			SetEntityModel(shield, customShieldModel);
 		else

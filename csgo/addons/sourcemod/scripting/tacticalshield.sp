@@ -49,7 +49,7 @@
 #define PLUGIN_NAME "Tactical Shield"
 #define AUTHOR "Keplyx"
 
-#define customModelsFile "/custom_models.txt"
+#define customModelsFile "/tacticalshield_model.txt"
 
 char customModelsPath[256];
 
@@ -733,118 +733,83 @@ public void OnCvarChange(ConVar convar, char[] oldValue, char[] newValue)
  *											CUSTOM MODEL
  ************************************************************************************************************/
 
- /**
- * Read the custom models file to extract model names and custom rotations.
- * Those models and rotations are used if the corresponding cvar is set.
- */
+/**
+* If the custom models file exists, read its content and set the custom models
+* to the ones specified in the file, if they are valid.
+* Invalid models will be set to default.
+*/
 public void ReadCustomModelsFile()
 {
-	char path[PLATFORM_MAX_PATH], line[PLATFORM_MAX_PATH];
+	char path[PLATFORM_MAX_PATH];
 	BuildPath(Path_SM, path, sizeof(path), "%s%s", customModelsPath, customModelsFile);
-	File file = OpenFile(path, "r");
 	if (!FileExists(path))
 	{
 		customShieldModel = "";
-		for (int i = 0; i < sizeof(customFullPos); i++)
-		{
-			customFullPos[i] = defaultFullPos[i];
-			customFullRot[i] = defaultFullRot[i];
-			customHalfPos[i] = defaultHalfPos[i];
-			customHalfRot[i] = defaultHalfRot[i];
-			customBackPos[i] = defaultBackPos[i];
-			customBackRot[i] = defaultBackRot[i];
-		}
 		PrintToServer("Could not find custom models file. Falling back to default");
 		return;
 	}
-	while (file.ReadLine(line, sizeof(line)))
-	{
-		if (StrContains(line, "//", false) == 0)
-			continue;
-
-		if (StrContains(line, "model=", false) == 0)
-			ReadModel(line)
-		else if (StrContains(line, "fullPos{", false) == 0)
-			SetCustomTransform(file, true, SHIELD_FULL);
-		else if (StrContains(line, "fullRot{", false) == 0)
-			SetCustomTransform(file, false, SHIELD_FULL);
-		else if (StrContains(line, "halfPos{", false) == 0)
-			SetCustomTransform(file, true, SHIELD_HALF);
-		else if (StrContains(line, "halfRot{", false) == 0)
-			SetCustomTransform(file, false, SHIELD_HALF);
-		else if (StrContains(line, "backPos{", false) == 0)
-			SetCustomTransform(file, true, SHIELD_BACK);
-		else if (StrContains(line, "backRot{", false) == 0)
-			SetCustomTransform(file, false, SHIELD_BACK);
-		if (file.EndOfFile())
-			break;
-	}
-	CloseHandle(file);
+	KeyValues kv = new KeyValues("model");
+	kv.ImportFromFile(path);
+	BrowseKeyValues(kv, "");
+	delete kv;
 }
 
-/**
-* Read the model on the given line and extracts the value to the associated variable.
-*/
-public void ReadModel(char line[PLATFORM_MAX_PATH])
+public void BrowseKeyValues(KeyValues kv, char parent[32])
 {
-	ReplaceString(line, sizeof(line), "model=", "", false);
-	ReplaceString(line, sizeof(line), "\n", "", false);
-	if (TryPrecacheModel(line))
-		Format(customShieldModel, sizeof(customShieldModel), "%s", line);
-	else
-		customShieldModel = "";
-}
-
-/**
-* Read the custom rotations and extracts their values to the corresponding variables.
-*/
-public void SetCustomTransform(File file, bool isPos, int state)
-{
-	char line[512];
-	while (file.ReadLine(line, sizeof(line)))
+	do
 	{
-		int i = 0;
-		if (StrContains(line, "x=", false) == 0)
-			ReplaceString(line, sizeof(line), "x=", "", false);
-		else if (StrContains(line, "y=", false) == 0)
+		// You can read the section/key name by using kv.GetSectionName here.
+		char sectionName[32];
+		kv.GetSectionName(sectionName, sizeof(sectionName));
+		if (kv.GotoFirstSubKey(false))
 		{
-			ReplaceString(line, sizeof(line), "y=", "", false);
-			i = 1;
+			// Current key is a section. Browse it recursively.
+			BrowseKeyValues(kv, sectionName);
+			kv.GoBack();
 		}
-		else if (StrContains(line, "z=", false) == 0)
+		else
 		{
-			ReplaceString(line, sizeof(line), "z=", "", false);
-			i = 2;
-		}
-		else if (StrContains(line, "}", false) == 0)
-			return;
-		ReplaceString(line, sizeof(line), "\n", "", false);
+			// Current key is a regular key, or an empty section.
+			if (kv.GetDataType(NULL_STRING) != KvData_None)
+			{
+				// Read value of key here (use NULL_STRING as key name). You can
+				// also get the key name by using kv.GetSectionName here.
+				
+				char val[128];
+				kv.GetString(NULL_STRING, val, sizeof(val), "");
+				if (!StrEqual(val, ""))
+				{
+					if (StrEqual(sectionName, "path"))
+					{
+						if (TryPrecacheModel(val))
+							Format(customShieldModel, sizeof(customShieldModel), "%s", val);
+						else
+							customShieldModel = "";
+					}
+					int coord = -1;
+					if (StrEqual(sectionName, "x"))
+						coord = 0;
+					else if (StrEqual(sectionName, "y"))
+						coord = 1;
+					else if (StrEqual(sectionName, "z"))
+						coord = 2;
+					if (StrEqual(parent, "full_pos", false))
+						customFullPos[coord] = StringToFloat(val);
+					else if (StrEqual(parent, "full_rot", false))
+						customFullRot[coord] = StringToFloat(val);
+					else if (StrEqual(parent, "half_pos", false))
+						customHalfPos[coord] = StringToFloat(val);
+					else if (StrEqual(parent, "half_rot", false))
+						customHalfRot[coord] = StringToFloat(val);
+					else if (StrEqual(parent, "back_pos", false))
+						customBackPos[coord] = StringToFloat(val);
+					else if (StrEqual(parent, "back_rot", false))
+						customBackRot[coord] = StringToFloat(val);
+				}
 
-		switch(state)
-		{
-			case SHIELD_FULL:
-			{
-				if (isPos)
-					customFullPos[i] = StringToFloat(line);
-				else
-					customFullRot[i] = StringToFloat(line);
-			}
-			case SHIELD_HALF:
-			{
-				if (isPos)
-					customHalfPos[i] = StringToFloat(line);
-				else
-					customHalfRot[i] = StringToFloat(line);
-			}
-			case SHIELD_BACK:
-			{
-				if (isPos)
-					customBackPos[i] = StringToFloat(line);
-				else
-					customBackRot[i] = StringToFloat(line);
 			}
 		}
-	}
+	} while (kv.GotoNextKey(false));
 }
 
 /**
