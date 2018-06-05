@@ -50,7 +50,7 @@ public void CreateConVars(char[] version)
 	
 	cvar_keep_between_rounds = CreateConVar("ts_keep_between_rounds", "1", "Set whether to keep shields between rounds when staying alive with one. This will also keep override state.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 
-	cvar_usecustom_model = CreateConVar("ts_custom_model", "0", "Set whether to use a model specified in sourcemod/gamedata/tacticalshield/custom_models.txt.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	cvar_usecustom_model = CreateConVar("ts_custom_model", "0", "Set whether to use a model specified in sourcemod/gamedata/tacticalshield/tacticalshield_models.txt.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	cvar_usecustom_model.AddChangeHook(OnCvarChange);
 	
 	cvar_cooldown = CreateConVar("ts_cooldown", "1", "Set the time after which player can change the shield state, re-deploy the shield (full/half).", FCVAR_NOTIFY, true, 0.0, true, 1000.0);

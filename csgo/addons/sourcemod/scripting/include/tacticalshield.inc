@@ -89,6 +89,7 @@ native void DestroyPlayerShield(int client);
  * Force the specified player to equip/unequip the shield.
  *
  * @param client			Client index.
+ * @param equip				Whether to equip the shield.
  * @return
  * @error					Invalid client.
  */
