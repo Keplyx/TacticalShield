@@ -5,6 +5,10 @@ title : Home
 
 # Tactical Shield
 
+# REPOSITORY UNMAINTAINED
+
+# Please go [here](https://gitlab.com/Keplyx/TacticalShield) for the up to date repository
+
 This plugin adds a tactical shield (or ballistic shield) to the game. It is designed to improve the tactical side of the game.
 
 Fully compatible with [Cameras and drones](https://keplyx.github.io/cameras-and-drones/)!
